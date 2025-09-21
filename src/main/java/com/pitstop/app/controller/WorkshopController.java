@@ -1,0 +1,44 @@
+package com.pitstop.app.controller;
+
+import com.pitstop.app.constants.WorkshopStatus;
+import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/workshops")
+@RequiredArgsConstructor
+public class WorkshopController {
+
+    private final WorkshopUserServiceImpl workshopService;
+
+    // Only ADMIN_USER role user can access this
+    @GetMapping
+    public ResponseEntity<List<WorkshopUser>> getAllWorkshopUser() {
+        List<WorkshopUser> workshopUserList =  workshopService.getAllWorkshopUser();
+        return new ResponseEntity<>(workshopUserList, HttpStatus.OK);
+    }
+
+    // Role should be NORMAL_WORKSHOP_USER
+    // Remove {workshopUserId} part from path variable after auth is implemented
+    // Directly pull workshopUser details from Request Object
+    @PostMapping("/setWorkshopStatus/{workshopUserId}")
+    public ResponseEntity<WorkshopUser> openWorkshop(@PathVariable String workshopUserId) {
+        return new ResponseEntity<>(workshopService.openWorkshop(workshopUserId), HttpStatus.OK);
+    }
+
+     /*
+    Create Secured endpoints / API for the below functionality:
+    1. (PUT) Can update address
+    2. (GET) Fetch bookingHistory - Create relevant DTO to return
+    3. (PUT) Update email
+    4. (PUT) Update password
+    5. (DELETE) Delete account
+     */
+
+}
