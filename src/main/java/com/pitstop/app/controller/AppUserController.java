@@ -1,14 +1,15 @@
 package com.pitstop.app.controller;
 
+import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -35,5 +36,10 @@ public class AppUserController {
     5. (PUT) Update password
     6. (DELETE) Delete account
      */
+
+    @PutMapping("/add-address")
+    public ResponseEntity<String> addAddress(@RequestBody Address address){
+        return new ResponseEntity<>(appUserService.addAddress(address),HttpStatus.OK);
+    }
 
 }

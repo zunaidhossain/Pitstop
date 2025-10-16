@@ -2,6 +2,7 @@ package com.pitstop.app.model;
 
 import com.pitstop.app.constants.WorkshopStatus;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -14,51 +15,26 @@ import java.util.List;
 @Getter
 @Setter
 @Document(collection = "workshops")
-public class WorkshopUser {
+@NoArgsConstructor
+public class WorkshopUser implements BaseUser{
 
-    // Compulsory Attributes to create WorkshopUser Account
     @Id
     private String id;
     private String username;
     private String email;
     private String password;
-    private String workshopAddress;
-    private List<String> roles;
+    private Address workshopAddress;
+    private List<String> roles = List.of("WORKSHOP");
 
-    // Set these attributes while object creation
-    private double currentWalletBalance;
-    private double rating;
+    private double currentWalletBalance = 0.0;
+    private double rating = 0.0;
 
     @DBRef
-    private List<Booking> bookingHistory;
-    private WorkshopStatus currentWorkshopStatus;
-    private LocalDateTime accountCreationDateTime;
-    private LocalDateTime accountLastModifiedDateTime;
+    private List<Booking> bookingHistory = new ArrayList<>();
 
-    // Additional Attributes
-    private boolean enabled;
-    private boolean accountNonExpired;
-    private boolean accountNonLocked;
-    private boolean credentialsNonExpired;
+    private WorkshopStatus currentWorkshopStatus = WorkshopStatus.CLOSED;
+    private LocalDateTime accountCreationDateTime = LocalDateTime.now();
+    private LocalDateTime accountLastModifiedDateTime = LocalDateTime.now();
 
-    WorkshopUser(String username, String email, String password, String workshopAddress) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.workshopAddress = workshopAddress;
-        roles = new ArrayList<>();
-        roles.add("NORMAL_WORKSHOP_USER");
-
-        currentWalletBalance = 0;
-        rating = 5;
-        bookingHistory = new ArrayList<>();
-        currentWorkshopStatus = WorkshopStatus.CLOSED;
-        accountCreationDateTime = LocalDateTime.now();
-        accountLastModifiedDateTime = LocalDateTime.now();
-
-        enabled = true;
-        accountNonExpired = true;
-        accountNonLocked = true;
-        credentialsNonExpired = true;
-    }
+    private boolean enabled = true;
 }

@@ -1,7 +1,7 @@
 package com.pitstop.app.model;
 
-import com.pitstop.app.constants.WorkshopStatus;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -11,52 +11,29 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor
 @Getter
 @Setter
 @Document(collection = "users")
-public class AppUser {
+public class AppUser implements BaseUser{
 
-    // Compulsory Attributes to create User Account
     @Id
     private String id;
+
     private String username;
     private String email;
     private String password;
-    private List<String> roles;
+    private List<String> roles = List.of("USER");
 
-    // Set these attributes while object creation
-    private List<String> userAddress;
-    private double currentWalletBalance;
-    private double rating;
+    private List<Address> userAddress = new ArrayList<>();
+    private double currentWalletBalance = 0.0;
+    private double rating = 0.0;
 
     @DBRef
-    private List<Booking> bookingHistory;
-    private LocalDateTime accountCreationDateTime;
-    private LocalDateTime accountLastModifiedDateTime;
+    private List<Booking> bookingHistory = new ArrayList<>();
 
-    // Additional Attributes
-    private boolean enabled;
-    private boolean accountNonExpired;
-    private boolean accountNonLocked;
-    private boolean credentialsNonExpired;
+    private LocalDateTime accountCreationDateTime = LocalDateTime.now();
+    private LocalDateTime accountLastModifiedDateTime = LocalDateTime.now();
 
-    AppUser(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        roles = new ArrayList<>();
-        roles.add("NORMAL_APP_USER");
-
-        userAddress = new ArrayList<>();
-        currentWalletBalance = 0;
-        rating = 5;
-        bookingHistory = new ArrayList<>();
-        accountCreationDateTime = LocalDateTime.now();
-        accountLastModifiedDateTime = LocalDateTime.now();
-
-        enabled = true;
-        accountNonExpired = true;
-        accountNonLocked = true;
-        credentialsNonExpired = true;
-    }
+    private boolean enabled = true;
 }
