@@ -1,21 +1,39 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.dto.AppUserLoginRequest;
+import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.service.AppUserService;
+import com.pitstop.app.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AppUserServiceImpl implements AppUserService {
     private final AppUserRepository appUserRepository;
-
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final AuthenticationManager manager;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JwtUtil jwtUtil;
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
+        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
         appUserRepository.save(appUser);
     }
 
@@ -28,5 +46,36 @@ public class AppUserServiceImpl implements AppUserService {
     @Override
     public List<AppUser> getAllAppUser() {
         return appUserRepository.findAll();
+    }
+
+    @Override
+    public String addAddress(Address address) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        AppUser appUser = appUserRepository.findByUsername(username)
+                .orElseThrow(()-> new RuntimeException("User not found"));
+            List<Address> addresses = appUser.getUserAddress();
+            addresses.add(address);
+            appUser.setUserAddress(addresses);
+            appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+            appUserRepository.save(appUser);
+        return "Address added successfully";
+    }
+    public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
+        try {
+            manager.authenticate(
+                    new UsernamePasswordAuthenticationToken(appUser.getUsername(),appUser.getPassword())
+            );
+            UserDetails userDetails = userDetailsService.loadUserByUsername(appUser.getUsername());
+            String token = jwtUtil.generateToken(userDetails.getUsername());
+            AppUserLoginResponse response = new AppUserLoginResponse(
+                    userDetails.getUsername(),
+                    token,
+                    "Login successful"
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception e){
+            return new ResponseEntity<>("Incorrect username or password",HttpStatus.BAD_REQUEST);
+        }
     }
 }

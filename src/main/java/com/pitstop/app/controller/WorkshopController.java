@@ -1,11 +1,15 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.constants.WorkshopStatus;
+import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,9 +31,13 @@ public class WorkshopController {
     // Role should be NORMAL_WORKSHOP_USER
     // Remove {workshopUserId} part from path variable after auth is implemented
     // Directly pull workshopUser details from Request Object
-    @PostMapping("/setWorkshopStatus/{workshopUserId}")
-    public ResponseEntity<WorkshopUser> openWorkshop(@PathVariable String workshopUserId) {
-        return new ResponseEntity<>(workshopService.openWorkshop(workshopUserId), HttpStatus.OK);
+    @PostMapping("/setWorkshopStatus")
+    public ResponseEntity<WorkshopStatusResponse> openWorkshop() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        WorkshopStatusResponse response = workshopService.openWorkshop(username);
+        return ResponseEntity.ok(response);
     }
 
      /*
@@ -40,5 +48,8 @@ public class WorkshopController {
     4. (PUT) Update password
     5. (DELETE) Delete account
      */
-
+     @PutMapping("/update-address")
+     public ResponseEntity<String> addAddress(@RequestBody Address address){
+         return new ResponseEntity<>(workshopService.addAddress(address),HttpStatus.OK);
+     }
 }
