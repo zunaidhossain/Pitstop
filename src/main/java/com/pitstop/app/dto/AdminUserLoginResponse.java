@@ -2,12 +2,11 @@ package com.pitstop.app.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class AppUserLoginRequest {
+public class AdminUserLoginResponse {
     private String username;
-    private String password;
+    private String token;
+    private String message;
 }

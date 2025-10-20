@@ -21,13 +21,6 @@ public class WorkshopController {
 
     private final WorkshopUserServiceImpl workshopService;
 
-    // Only ADMIN_USER role user can access this
-    @GetMapping
-    public ResponseEntity<List<WorkshopUser>> getAllWorkshopUser() {
-        List<WorkshopUser> workshopUserList =  workshopService.getAllWorkshopUser();
-        return new ResponseEntity<>(workshopUserList, HttpStatus.OK);
-    }
-
     // Role should be NORMAL_WORKSHOP_USER
     // Remove {workshopUserId} part from path variable after auth is implemented
     // Directly pull workshopUser details from Request Object

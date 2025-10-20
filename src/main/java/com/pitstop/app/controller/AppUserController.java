@@ -1,17 +1,12 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.model.Address;
-import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -19,13 +14,6 @@ import java.util.List;
 public class AppUserController {
 
     private final AppUserServiceImpl appUserService;
-
-    // Only ADMIN_USER role user can access this endpoint
-    @GetMapping
-    public ResponseEntity<List<AppUser>> getAllAppUser() {
-        List<AppUser> appUserList =  appUserService.getAllAppUser();
-        return new ResponseEntity<>(appUserList, HttpStatus.OK);
-    }
 
     /*
     Create Secured endpoints / API for the below functionality:

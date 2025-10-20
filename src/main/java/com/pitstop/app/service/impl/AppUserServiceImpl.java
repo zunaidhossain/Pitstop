@@ -3,6 +3,7 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.repository.AppUserRepository;
@@ -17,48 +18,58 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AppUserServiceImpl implements AppUserService {
     private final AppUserRepository appUserRepository;
-    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager manager;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtil jwtUtil;
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
-        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
-        appUserRepository.save(appUser);
+        if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
+            appUserRepository.save(appUser);
+        }
+        else {
+            appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
+            appUserRepository.save(appUser);
+        }
     }
 
     @Override
     public AppUser getAppUserById(String id) {
         return appUserRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("AppUser not found with ID :"+id));
+                .orElseThrow(()-> new ResourceNotFoundException("AppUser not found with ID :"+id));
     }
 
     @Override
     public List<AppUser> getAllAppUser() {
-        return appUserRepository.findAll();
+        return new ArrayList<>(appUserRepository.findAll());
     }
 
     @Override
+    @Transactional
     public String addAddress(Address address) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         AppUser appUser = appUserRepository.findByUsername(username)
-                .orElseThrow(()-> new RuntimeException("User not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("User not found"));
             List<Address> addresses = appUser.getUserAddress();
             addresses.add(address);
             appUser.setUserAddress(addresses);
             appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-            appUserRepository.save(appUser);
+            saveAppUserDetails(appUser);
         return "Address added successfully";
     }
     public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
