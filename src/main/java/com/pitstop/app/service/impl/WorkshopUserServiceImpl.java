@@ -74,7 +74,8 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         workshopUser.setCurrentWorkshopStatus(WorkshopStatus.OPEN);
         saveWorkshopUserDetails(workshopUser);
 
-        return new WorkshopStatusResponse(workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus());
+        return new WorkshopStatusResponse(workshopUser.getId(), workshopUser.getName(),
+                workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus(), workshopUser.getWorkshopAddress());
     }
     public ResponseEntity<?> loginWorkshopUser(WorkshopLoginRequest workshopUser){
         try {

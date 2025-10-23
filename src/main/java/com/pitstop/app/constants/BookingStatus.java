@@ -4,8 +4,10 @@ public enum BookingStatus {
     STARTED,
     BOOKED,
     ON_THE_WAY,
+    WAITING,
     CANCELLED,
     REPAIRING,
     COMPLETED,
-    REJECTED
+    REJECTED,
+    TIMED_OUT
 }

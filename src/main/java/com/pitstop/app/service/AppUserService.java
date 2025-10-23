@@ -7,7 +7,7 @@ import java.util.List;
 public interface AppUserService {
     void saveAppUserDetails(AppUser appUser);
     AppUser getAppUserById(String id);
+    AppUser getAppUserByUsername(String username);
     List<AppUser> getAllAppUser();
-
     String addAddress(Address address);
 }

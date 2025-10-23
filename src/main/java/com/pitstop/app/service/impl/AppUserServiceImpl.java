@@ -54,6 +54,12 @@ public class AppUserServiceImpl implements AppUserService {
     }
 
     @Override
+    public AppUser getAppUserByUsername(String username) {
+        return appUserRepository.findByUsername(username)
+                .orElseThrow(()-> new RuntimeException("AppUser not found with username :"+username));
+    }
+
+    @Override
     public List<AppUser> getAllAppUser() {
         return new ArrayList<>(appUserRepository.findAll());
     }

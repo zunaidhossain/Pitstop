@@ -21,6 +21,11 @@ public class Booking {
     private double amount;
     private String vehicleDetails;
 
+    private String workShopName;
+    private Address workShopAddress;
+    private String otp;
+    private LocalDateTime otpExpiry;
+
     private BookingStatus currentStatus = BookingStatus.STARTED;
     private LocalDateTime bookingStartedTime = LocalDateTime.now();
     private LocalDateTime bookingCompletedTime;
@@ -29,11 +34,18 @@ public class Booking {
     private double ratingWorkshopToAppUser = 0.0;
 
     //Lets you easily link Booking to an AppUser and WorkshopUser if you plan to display booking history for each.
+//    @DBRef
+//    private AppUser appUser;
+//
+//    @DBRef
+//    private WorkshopUser workshopUser;
+
     private String appUserId;
     private String workshopUserId;
 
-    public Booking(double amount, String vehicleDetails) {
+    public Booking(double amount, String vehicleDetails, String appUserId) {
         this.amount = amount;
         this.vehicleDetails = vehicleDetails;
+        this.appUserId = appUserId;
     }
 }
