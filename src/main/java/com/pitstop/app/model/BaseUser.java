@@ -6,4 +6,5 @@ public interface BaseUser {
     String getUsername();
     String getPassword();
     List<String> getRoles();
+    void setRoles(List<String> roles);
 }

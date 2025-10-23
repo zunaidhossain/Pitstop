@@ -3,6 +3,7 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.BaseUser;
 import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.repository.AdminUserRepository;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final AppUserRepository appUserRepository;
     private final WorkshopUserRepository workshopUserRepository;
+    private final AdminUserRepository adminUserRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         System.out.println("Attempting login for username: " + username);
+
         return appUserRepository.findByUsername(username)
                 .map(user -> {
                     System.out.println("Found AppUser: " + user.getUsername());
@@ -34,7 +37,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                             System.out.println("Found WorkshopUser: " + user.getUsername());
                             return mapToUserDetails(user);
                         })
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username))
+                        .orElseGet(() -> adminUserRepository.findByUsername(username)
+                                .map(user -> {
+                                    System.out.println("Found AdminUser: " + user.getUsername());
+                                    return mapToUserDetails(user);
+                                })
+                                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username))
+                        )
                 );
     }
 

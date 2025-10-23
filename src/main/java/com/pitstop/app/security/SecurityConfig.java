@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request
                         // allow register and login without token
                         .requestMatchers("/api/home/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // allow preflight CORS requests
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated())

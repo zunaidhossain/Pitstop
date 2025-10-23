@@ -4,8 +4,8 @@ import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
-import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.WorkshopService;
@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -46,7 +47,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
     @Override
     public WorkshopUser getWorkshopUserById(String id) {
         return workshopUserRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("WorkshopUser not found with ID :"+id));
+                .orElseThrow(()-> new ResourceNotFoundException("WorkshopUser not found with ID :"+id));
     }
 
     @Override
@@ -59,15 +60,16 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         WorkshopUser workshopUser = workshopUserRepository.findByUsername(username)
-                .orElseThrow(()-> new RuntimeException("Workshop not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
         workshopUser.setWorkshopAddress(address);
+        workshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
         saveWorkshopUserDetails(workshopUser);
         return "Address added successfully";
     }
 
     public WorkshopStatusResponse openWorkshop(String username) {
         WorkshopUser workshopUser = workshopUserRepository.findByUsername(username)
-                .orElseThrow(()-> new RuntimeException("Workshop not found with username : "+username));
+                .orElseThrow(()-> new ResourceNotFoundException("Workshop not found with username : "+username));
 
         workshopUser.setCurrentWorkshopStatus(WorkshopStatus.OPEN);
         saveWorkshopUserDetails(workshopUser);
