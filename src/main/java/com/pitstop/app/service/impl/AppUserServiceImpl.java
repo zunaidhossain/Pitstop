@@ -2,7 +2,6 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
-import com.pitstop.app.dto.WorkshopLoginRequest;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.repository.AppUserRepository;
@@ -33,14 +32,25 @@ public class AppUserServiceImpl implements AppUserService {
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
-        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
-        appUserRepository.save(appUser);
+        if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
+            appUserRepository.save(appUser);
+        }
+        else {
+            appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
+            appUserRepository.save(appUser);
+        }
     }
 
     @Override
     public AppUser getAppUserById(String id) {
         return appUserRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("AppUser not found with ID :"+id));
+    }
+
+    @Override
+    public AppUser getAppUserByUsername(String username) {
+        return appUserRepository.findByUsername(username)
+                .orElseThrow(()-> new RuntimeException("AppUser not found with username :"+username));
     }
 
     @Override
@@ -54,11 +64,11 @@ public class AppUserServiceImpl implements AppUserService {
         String username = authentication.getName();
         AppUser appUser = appUserRepository.findByUsername(username)
                 .orElseThrow(()-> new RuntimeException("User not found"));
-            List<Address> addresses = appUser.getUserAddress();
-            addresses.add(address);
-            appUser.setUserAddress(addresses);
-            appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-            appUserRepository.save(appUser);
+        List<Address> addresses = appUser.getUserAddress();
+        addresses.add(address);
+        appUser.setUserAddress(addresses);
+        appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+        appUserRepository.save(appUser);
         return "Address added successfully";
     }
     public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
