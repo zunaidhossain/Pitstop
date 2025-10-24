@@ -3,6 +3,7 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.exception.EmailAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
@@ -38,6 +39,9 @@ public class AppUserServiceImpl implements AppUserService {
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
+        if(appUserRepository.existsByEmail(appUser.getEmail())){
+            throw new EmailAlreadyExistException("AppUser already exist with email : "+appUser.getEmail());
+        }
         if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
             appUserRepository.save(appUser);
         }
