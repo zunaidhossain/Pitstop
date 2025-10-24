@@ -4,6 +4,7 @@ import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.exception.EmailAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
@@ -35,6 +36,9 @@ public class WorkshopUserServiceImpl implements WorkshopService {
 
     @Override
     public void saveWorkshopUserDetails(WorkshopUser workshopUser) {
+        if(workshopUserRepository.existsByEmail(workshopUser.getEmail())){
+            throw new EmailAlreadyExistException("WorkshopUser already exist with email : "+workshopUser.getEmail());
+        }
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
             workshopUserRepository.save(workshopUser);
         }
