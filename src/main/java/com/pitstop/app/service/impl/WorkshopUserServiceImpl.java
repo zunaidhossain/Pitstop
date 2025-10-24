@@ -4,7 +4,7 @@ import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
-import com.pitstop.app.exception.EmailAlreadyExistException;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +37,9 @@ public class WorkshopUserServiceImpl implements WorkshopService {
 
     @Override
     public void saveWorkshopUserDetails(WorkshopUser workshopUser) {
-        if(workshopUserRepository.existsByEmail(workshopUser.getEmail())){
-            throw new EmailAlreadyExistException("WorkshopUser already exist with email : "+workshopUser.getEmail());
+        Optional<WorkshopUser> existingUser = workshopUserRepository.findByUsernameOrEmail(workshopUser.getUsername(),workshopUser.getEmail());
+        if(existingUser.isPresent()){
+            throw new UserAlreadyExistException("WorkshopUser already exists");
         }
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
             workshopUserRepository.save(workshopUser);
