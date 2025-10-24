@@ -2,8 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
-import com.pitstop.app.dto.WorkshopLoginRequest;
-import com.pitstop.app.exception.EmailAlreadyExistException;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
@@ -18,7 +17,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +37,9 @@ public class AppUserServiceImpl implements AppUserService {
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
-        if(appUserRepository.existsByEmail(appUser.getEmail())){
-            throw new EmailAlreadyExistException("AppUser already exist with email : "+appUser.getEmail());
+        Optional<AppUser> existingUser = appUserRepository.findByUsernameOrEmail(appUser.getUsername(),appUser.getEmail());
+        if(existingUser.isPresent()){
+            throw new UserAlreadyExistException("AppUser already exists");
         }
         if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
             appUserRepository.save(appUser);
