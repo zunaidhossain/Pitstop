@@ -41,6 +41,10 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         if(existingUser.isPresent()){
             throw new UserAlreadyExistException("WorkshopUser already exists");
         }
+        workshopUser.setPassword(passwordEncoder.encode(workshopUser.getPassword()));
+        workshopUserRepository.save(workshopUser);
+    }
+    public void updateWorkshopUserDetails(WorkshopUser workshopUser){
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
             workshopUserRepository.save(workshopUser);
         }
@@ -69,7 +73,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
                 .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
         workshopUser.setWorkshopAddress(address);
         workshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-        saveWorkshopUserDetails(workshopUser);
+        updateWorkshopUserDetails(workshopUser);
         return "Address added successfully";
     }
 
@@ -78,7 +82,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
                 .orElseThrow(()-> new ResourceNotFoundException("Workshop not found with username : "+username));
 
         workshopUser.setCurrentWorkshopStatus(WorkshopStatus.OPEN);
-        saveWorkshopUserDetails(workshopUser);
+        updateWorkshopUserDetails(workshopUser);
 
         return new WorkshopStatusResponse(workshopUser.getId(), workshopUser.getName(),
                 workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus(), workshopUser.getWorkshopAddress());
