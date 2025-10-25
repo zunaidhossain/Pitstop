@@ -4,6 +4,7 @@ import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.dto.WorkshopLoginRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,14 @@ public class WorkshopUserServiceImpl implements WorkshopService {
 
     @Override
     public void saveWorkshopUserDetails(WorkshopUser workshopUser) {
+        Optional<WorkshopUser> existingUser = workshopUserRepository.findByUsernameOrEmail(workshopUser.getUsername(),workshopUser.getEmail());
+        if(existingUser.isPresent()){
+            throw new UserAlreadyExistException("WorkshopUser already exists");
+        }
+        workshopUser.setPassword(passwordEncoder.encode(workshopUser.getPassword()));
+        workshopUserRepository.save(workshopUser);
+    }
+    public void updateWorkshopUserDetails(WorkshopUser workshopUser){
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
             workshopUserRepository.save(workshopUser);
         }
@@ -63,7 +73,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
                 .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
         workshopUser.setWorkshopAddress(address);
         workshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-        saveWorkshopUserDetails(workshopUser);
+        updateWorkshopUserDetails(workshopUser);
         return "Address added successfully";
     }
 
@@ -72,7 +82,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
                 .orElseThrow(()-> new ResourceNotFoundException("Workshop not found with username : "+username));
 
         workshopUser.setCurrentWorkshopStatus(WorkshopStatus.OPEN);
-        saveWorkshopUserDetails(workshopUser);
+        updateWorkshopUserDetails(workshopUser);
 
         return new WorkshopStatusResponse(workshopUser.getId(), workshopUser.getName(),
                 workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus(), workshopUser.getWorkshopAddress());

@@ -16,6 +16,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleResourceNotFound(ResourceNotFoundException ex, WebRequest request) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request.getDescription(false));
     }
+
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<?> handleUserAlreadyExist(UserAlreadyExistException ex , WebRequest request){
+        return buildErrorResponse(ex.getMessage(),HttpStatus.CONFLICT,request.getDescription(false));
+    }
     private ResponseEntity<Map<String, Object>> buildErrorResponse(String message, HttpStatus status, String path) {
         Map<String, Object> errorBody = new HashMap<>();
         errorBody.put("timestamp", LocalDateTime.now());

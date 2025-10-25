@@ -2,6 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.utils.JwtUtil;
@@ -20,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -120,5 +122,25 @@ class AppUserServiceImplTest {
         verify(manager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userDetailsService, times(1)).loadUserByUsername("testuser");
         verify(jwtUtil, times(1)).generateToken("testuser");
+    }
+    @Test
+    @DisplayName("AppUser cannot register with same email or username")
+    void saveAppUserDetails(){
+        AppUser appUser = new AppUser();
+        appUser.setUsername("newUser");
+        appUser.setEmail("new@gmail.com");
+        appUser.setPassword("test123");
+
+        AppUser existingUser = new AppUser();
+        existingUser.setUsername("existingUser");
+        existingUser.setEmail("existing@gmail.com");
+        when(appUserRepository.findByUsernameOrEmail("newUser","new@gmail.com"))
+                .thenReturn(Optional.of(existingUser));
+        UserAlreadyExistException ex = assertThrows(
+                UserAlreadyExistException.class,
+                () -> appUserService.saveAppUserDetails(appUser)
+        );
+        assertEquals("AppUser already exists",ex.getMessage());
+        verify(appUserRepository, never()).save(any(AppUser.class));
     }
 }
