@@ -37,10 +37,15 @@ public class AppUserServiceImpl implements AppUserService {
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
+        //register new AppUsers
         Optional<AppUser> existingUser = appUserRepository.findByUsernameOrEmail(appUser.getUsername(),appUser.getEmail());
         if(existingUser.isPresent()){
             throw new UserAlreadyExistException("AppUser already exists");
         }
+        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
+        appUserRepository.save(appUser);
+    }
+    public void updateAppUserDetails(AppUser appUser){
         if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
             appUserRepository.save(appUser);
         }
@@ -78,7 +83,7 @@ public class AppUserServiceImpl implements AppUserService {
             addresses.add(address);
             appUser.setUserAddress(addresses);
             appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-            saveAppUserDetails(appUser);
+        updateAppUserDetails(appUser);
         return "Address added successfully";
     }
     public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
