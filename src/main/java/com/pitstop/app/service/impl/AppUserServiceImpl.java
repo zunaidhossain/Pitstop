@@ -2,7 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
-import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
@@ -17,7 +17,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +37,15 @@ public class AppUserServiceImpl implements AppUserService {
 
     @Override
     public void saveAppUserDetails(AppUser appUser) {
+        //register new AppUsers
+        Optional<AppUser> existingUser = appUserRepository.findByUsernameOrEmail(appUser.getUsername(),appUser.getEmail());
+        if(existingUser.isPresent()){
+            throw new UserAlreadyExistException("AppUser already exists");
+        }
+        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
+        appUserRepository.save(appUser);
+    }
+    public void updateAppUserDetails(AppUser appUser){
         if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){
             appUserRepository.save(appUser);
         }
@@ -75,7 +83,7 @@ public class AppUserServiceImpl implements AppUserService {
             addresses.add(address);
             appUser.setUserAddress(addresses);
             appUser.setAccountLastModifiedDateTime(LocalDateTime.now());
-            saveAppUserDetails(appUser);
+        updateAppUserDetails(appUser);
         return "Address added successfully";
     }
     public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
