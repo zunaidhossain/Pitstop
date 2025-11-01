@@ -89,8 +89,8 @@ public class BookingServiceImpl implements BookingService {
         currentAppUser.getBookingHistory().add(booking);
         workshopUser.getBookingHistory().add(booking);
 
-        appUserService.saveAppUserDetails(currentAppUser);
-        workshopUserService.saveWorkshopUserDetails(workshopUser);
+        appUserService.updateAppUserDetails(currentAppUser);
+        workshopUserService.updateWorkshopUserDetails(workshopUser);
 
         return booking.getId();
     }
