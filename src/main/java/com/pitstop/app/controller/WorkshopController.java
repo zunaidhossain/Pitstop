@@ -1,6 +1,7 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.constants.WorkshopStatus;
+import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
@@ -42,7 +43,7 @@ public class WorkshopController {
     5. (DELETE) Delete account
      */
      @PutMapping("/update-address")
-     public ResponseEntity<String> addAddress(@RequestBody Address address){
+     public ResponseEntity<String> addAddress(@RequestBody AddressRequest address){
          return new ResponseEntity<>(workshopService.addAddress(address),HttpStatus.OK);
      }
 }
