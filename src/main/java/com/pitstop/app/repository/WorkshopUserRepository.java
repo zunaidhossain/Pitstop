@@ -8,5 +8,13 @@ import java.util.Optional;
 public interface WorkshopUserRepository extends MongoRepository<WorkshopUser, String> {
     Optional<WorkshopUser> findByUsername(String username);
 
-    Optional<WorkshopUser> findByUsernameOrEmail(String username, String email);
+    /*
+    changed findUserByEmailOrUsername to just findByEmail
+    because we're already finding it by username in above method
+     */
+
+    Optional<WorkshopUser> findByEmail(String email);
+
+    //added for unit testing
+    void deleteByUsername(String username);
 }
