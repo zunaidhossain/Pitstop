@@ -1,5 +1,6 @@
 package com.pitstop.app.controller;
 
+import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,12 @@ public class AppUserController {
      */
 
     @PutMapping("/add-address")
-    public ResponseEntity<String> addAddress(@RequestBody Address address){
+    public ResponseEntity<String> addAddress(@RequestBody AddressRequest address){
         return new ResponseEntity<>(appUserService.addAddress(address),HttpStatus.OK);
+    }
+    @PutMapping("/change-default-address")
+    public ResponseEntity<String> changeDefaultAddress(@RequestBody AddressRequest addressRequest) {
+        return new ResponseEntity<>(appUserService.changeDefaultAddress(addressRequest),HttpStatus.OK);
     }
 
 }
