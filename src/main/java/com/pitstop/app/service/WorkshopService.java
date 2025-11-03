@@ -1,5 +1,6 @@
 package com.pitstop.app.service;
 
+import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
 
@@ -10,5 +11,5 @@ public interface WorkshopService {
     WorkshopUser getWorkshopUserById(String id);
     List<WorkshopUser> getAllWorkshopUser();
 
-    String addAddress(Address address);
+    String addAddress(AddressRequest address);
 }

@@ -1,146 +1,129 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.exception.UserAlreadyExistException;
+import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.repository.AppUserRepository;
+import com.pitstop.app.service.AppUserService;
 import com.pitstop.app.utils.JwtUtil;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
 @DisplayName("AppUserServiceImpl Unit Test")
-class AppUserServiceImplTest {
-
-    @Mock
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class AppUserServiceImplTest {
+    @Autowired
     private AppUserRepository appUserRepository;
-    @Mock
-    private AuthenticationManager manager;
-    @Mock
-    private UserDetailsServiceImpl userDetailsService;
-    @Mock
-    private JwtUtil jwtUtil;
-    @Mock
+    @Autowired
+    private AppUserServiceImpl appUserService;
+    @Autowired
     private PasswordEncoder passwordEncoder;
+    private AppUser appUser;
 
-    @InjectMocks
-    private AppUserServiceImpl appUserService;  //this is what we want to test,The service behaves like real, but its dependencies are fake and under your control.
-
-    @BeforeEach
-    void setUp(){
-
+    @BeforeAll
+    public void setUpOnce() {
+        appUserRepository.deleteByUsername("xxxx_xxxx_app_user");
+        appUser = new AppUser();
+        appUser.setName("AppUser Test Sample Name");
+        appUser.setUsername("xxxx_xxxx_app_user");
+        appUser.setEmail("xxxx_xxxx_app_user@xyz.com");
+        appUser.setPassword("123456789");
     }
-
+    @Order(1)
     @Test
-    @DisplayName("Should save existing user without encoding password")
-    void shouldSaveExistingUserWithoutPasswordEncoding(){
-        AppUser user = new AppUser();
-        user.setId("123");
-        user.setUsername("Hecker Hubba");
-        user.setPassword("plainpassword");
+    @DisplayName("AppUser registering new Account")
+    void saveAppUserDetailsTest(){
+       appUserService.saveAppUserDetails(appUser);
+       AppUser found = appUserRepository.findByUsername("xxxx_xxxx_app_user").orElseThrow(() -> new AssertionError("AppUser was not saved"));
 
-        when(appUserRepository.existsById("123")).thenReturn(true);
-        appUserService.saveAppUserDetails(user);
-
-        verify(appUserRepository, times(1)).save(user);
-        verify(passwordEncoder,never()).encode(any());
-        assertEquals("plainpassword", user.getPassword());
+       assertEquals("AppUser Test Sample Name",found.getName());
+       assertEquals("xxxx_xxxx_app_user",found.getUsername());
+       assertEquals("xxxx_xxxx_app_user@xyz.com",found.getEmail());
+       assertTrue(passwordEncoder.matches("123456789", found.getPassword()));
     }
+    @Order(2)
     @Test
-    @DisplayName("Should save new user by encoding password")
-    void shouldSaveNewUserWithEncodedPassword(){
-        AppUser appUser = new AppUser();
-        appUser.setId("123");
-        appUser.setUsername("zunaid hecker");
-        appUser.setPassword("plainpassword");
+    @DisplayName("Should not register user with duplicate username or password")
+    void shouldNotRegisterNewUserWithSameCredentials() {
+        AppUser duplicateAppUser = new AppUser();
 
-        when(appUserRepository.existsById(any())).thenReturn(false);
-        when(passwordEncoder.encode("plainpassword")).thenReturn("encodedpassword");
+        duplicateAppUser.setName("Duplicate");
+        duplicateAppUser.setUsername("xxxx_xxxx_app_user");
+        duplicateAppUser.setEmail("xxxx_xxxx_app_user@xyz.com");
+        duplicateAppUser.setPassword("123456789");
 
-        appUserService.saveAppUserDetails(appUser);
-
-        verify(appUserRepository, times(1)).save(appUser);
-        verify(passwordEncoder,times(1)).encode("plainpassword");
-        assertEquals("encodedpassword",appUser.getPassword());
+        assertThrows(UserAlreadyExistException.class , () ->
+                appUserService.saveAppUserDetails(duplicateAppUser));
     }
+    @Order(3)
+    @DisplayName("User Should login Successfully")
     @Test
-    @DisplayName("Address Should be added to the user's Address List")
-    void checkAddressAddedInList(){
-        AppUser appUser = new AppUser();
-        appUser.setId("123");
-        appUser.setUserAddress(new ArrayList<>());
+    void shouldLoginSuccessfully(){
+        AppUserLoginRequest appUserLoginRequest = new AppUserLoginRequest();
+        appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
+        appUserLoginRequest.setPassword("123456789");
+
+        var response = appUserService.loginAppUser(appUserLoginRequest);
+        assertEquals(200,response.getStatusCodeValue());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().toString().contains("Login successful"));
     }
+    @Order(4)
+    @DisplayName("User Should Not login with wrong credentials")
     @Test
-    @DisplayName("Login test should return JWT Token and 200")
-    void testLoginSuccess(){
-        // Arrange
-        AppUserLoginRequest loginRequest = new AppUserLoginRequest();
-        loginRequest.setUsername("testuser");
-        loginRequest.setPassword("password");
+    void shouldNotLoginWithWrongCredentials(){
+        AppUserLoginRequest appUserLoginRequest = new AppUserLoginRequest();
+        appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
+        appUserLoginRequest.setPassword("wrong");
 
-        UserDetails mockUserDetails = mock(UserDetails.class);
-        when(mockUserDetails.getUsername()).thenReturn("testuser");
-
-        // Mock authenticate() to return a token (non-void method)
-        when(manager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(mock(UsernamePasswordAuthenticationToken.class));
-        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(mockUserDetails);
-        when(jwtUtil.generateToken("testuser")).thenReturn("mockedJwtToken");
-
-        // Act
-        ResponseEntity<?> response = appUserService.loginAppUser(loginRequest);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody() instanceof AppUserLoginResponse);
-
-        AppUserLoginResponse body = (AppUserLoginResponse) response.getBody();
-        assertEquals("testuser", body.getUsername());
-        assertEquals("mockedJwtToken", body.getToken());
-        assertEquals("Login successful", body.getMessage());
-
-        // Verify interactions
-        verify(manager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userDetailsService, times(1)).loadUserByUsername("testuser");
-        verify(jwtUtil, times(1)).generateToken("testuser");
+        var response = appUserService.loginAppUser(appUserLoginRequest);
+        assertEquals(400,response.getStatusCodeValue());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().toString().contains("Incorrect username or password"));
     }
+    @Order(5)
+    @DisplayName("Adding address in user address List")
     @Test
-    @DisplayName("AppUser cannot register with same email or username")
-    void saveAppUserDetails(){
-        AppUser appUser = new AppUser();
-        appUser.setUsername("newUser");
-        appUser.setEmail("new@gmail.com");
-        appUser.setPassword("test123");
+    void addAddress(){
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            AddressRequest addressRequest = new AddressRequest();
+            addressRequest.setLatitude(22.597693666787432);
+            addressRequest.setLongitude(88.35945631449115);
+            appUserService.addAddress(addressRequest);
+            SecurityContextHolder.clearContext();
 
-        AppUser existingUser = new AppUser();
-        existingUser.setUsername("existingUser");
-        existingUser.setEmail("existing@gmail.com");
-        when(appUserRepository.findByUsernameOrEmail("newUser","new@gmail.com"))
-                .thenReturn(Optional.of(existingUser));
-        UserAlreadyExistException ex = assertThrows(
-                UserAlreadyExistException.class,
-                () -> appUserService.saveAppUserDetails(appUser)
-        );
-        assertEquals("AppUser already exists",ex.getMessage());
-        verify(appUserRepository, never()).save(any(AppUser.class));
+            AppUser updatedAppUser = appUserRepository.findByUsername(appUser.getUsername())
+                    .orElseThrow(() -> new AssertionError("AppUser not found after address update"));
+            assertNotNull(updatedAppUser.getUserAddress());
+            assertFalse(updatedAppUser.getUserAddress().isEmpty());
+
     }
 }

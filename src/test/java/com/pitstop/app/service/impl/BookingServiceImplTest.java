@@ -2,6 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.constants.WorkshopStatus;
+import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.BookingRequestOtp;
 import com.pitstop.app.dto.BookingResponse;
 import com.pitstop.app.dto.BookingStatusResponse;
@@ -50,45 +51,46 @@ public class BookingServiceImplTest {
 
     @BeforeAll
     public void setUpOnce() {
-
+        workshopUserRepository.deleteByUsername("xxxx_xxxx_workshop_user");
         // AppUser Set-Up
         appUser = new AppUser();
-        appUser.setName("AppUser Test Sample Name");
-        appUser.setUsername("xxxx_xxxx_app_user");
-        appUser.setEmail("xxxx_xxxx_app_user@xyz.com");
-        appUser.setPassword("123456789");
+        appUser.setName("Test App User");
+        appUser.setUsername("test_app_user_001");
+        appUser.setEmail("test_app_user_001@example.com");
+        appUser.setPassword("test@123");
         appUserRepository.save(appUser);
 
-        /*
-        Add address part later here once address functionality has
-        been implemented with latitude & longitude and replace below code.
-        */
+
         {
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
             SecurityContextHolder.getContext().setAuthentication(auth);
-            appUserService.addAddress(new Address("Kolkata 71"));
+            AddressRequest addressRequest = new AddressRequest();
+            addressRequest.setLatitude(22.597693666787432);
+            addressRequest.setLongitude(88.35945631449115);
+            appUserService.addAddress(addressRequest);
             SecurityContextHolder.clearContext();
         }
 
         // WorkshopUser Set-Up
         workshopUser = new WorkshopUser();
-        workshopUser.setName("WorkshopUser Test Sample Name");
-        workshopUser.setUsername("xxxx_xxxx_workshop_user");
-        workshopUser.setEmail("xxxx_xxxx_workshop_user@xyz.com");
-        workshopUser.setPassword("123456789");
+        workshopUser.setName("Test Workshop User");
+        workshopUser.setUsername("test_workshop_user_001");
+        workshopUser.setEmail("test_workshop_user_001@example.com");
+        workshopUser.setPassword("test@123");
         workshopUserRepository.save(workshopUser);
 
-        /*
-        Add address part later here once address functionality has
-        been implemented with latitude & longitude and replace below code.
-        */
+
         {
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), appUser.getPassword());
             SecurityContextHolder.getContext().setAuthentication(auth);
             workshopUserService.openWorkshop(workshopUser.getUsername());
-            workshopUserService.addAddress(new Address("Kolkata 71"));
+            AddressRequest addressRequest = new AddressRequest();
+            addressRequest.setLatitude(22.597693666787432);
+            addressRequest.setLongitude(88.35945631449115);
+
+            workshopUserService.addAddress(addressRequest);
             SecurityContextHolder.clearContext();
         }
 
