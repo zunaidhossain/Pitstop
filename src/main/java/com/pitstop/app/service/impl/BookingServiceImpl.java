@@ -8,8 +8,8 @@ import com.pitstop.app.dto.BookingStatusResponse;
 import com.pitstop.app.dto.WorkshopStatusResponse;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
+import com.pitstop.app.model.BookingStatusWithTimeStamp;
 import com.pitstop.app.model.WorkshopUser;
-import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.BookingService;
@@ -29,7 +29,6 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final AppUserServiceImpl appUserService;
     private final WorkshopUserServiceImpl workshopUserService;
-    private final AppUserRepository appUserRepository;
     private final WorkshopUserRepository workshopUserRepository;
     private final OTPService otpService;
 
@@ -153,7 +152,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking currentBooking = getBookingById(bookingId);
+        if (!currentBooking.getCurrentStatus().canTransitionTo(BookingStatus.BOOKED)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid booking status transition: %s -> %s", currentBooking.getCurrentStatus(), BookingStatus.BOOKED)
+            );
+        }
         currentBooking.setCurrentStatus(BookingStatus.BOOKED);
+        currentBooking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.BOOKED, LocalDateTime.now()));
         currentBooking.setWorkshopUserId(currentWorkShopUser.getId());
         currentBooking.setWorkShopName(currentWorkShopUser.getName());
         currentBooking.setWorkShopAddress(currentWorkShopUser.getWorkshopAddress());
@@ -205,9 +210,14 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking currentBooking = getBookingById(bookingId);
-        if(currentBooking.getCurrentStatus() != BookingStatus.BOOKED)
-            throw new RuntimeException("Booking id provided cannot be set ON_THE_WAY, id = "+bookingId);
+
+        if (!currentBooking.getCurrentStatus().canTransitionTo(BookingStatus.ON_THE_WAY)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid booking status transition: %s -> %s", currentBooking.getCurrentStatus(), BookingStatus.ON_THE_WAY)
+            );
+        }
         currentBooking.setCurrentStatus(BookingStatus.ON_THE_WAY);
+        currentBooking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.ON_THE_WAY, LocalDateTime.now()));
 
         saveBookingDetails(currentBooking);
 
@@ -255,6 +265,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingRequestOtp.getId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
+        if (!booking.getCurrentStatus().canTransitionTo(bookingStatus)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid booking status transition: %s -> %s", booking.getCurrentStatus(), bookingStatus)
+            );
+        }
+
         if (otpService.isOtpExpired(booking.getOtpExpiry())) {
             throw new RuntimeException("OTP expired. Please regenerate.");
         }
@@ -264,11 +280,84 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setCurrentStatus(bookingStatus);
+        booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(bookingStatus, LocalDateTime.now()));
         booking.setOtp(null);
 
         if(bookingStatus == BookingStatus.COMPLETED)
             booking.setBookingCompletedTime(LocalDateTime.now());
 
+        bookingRepository.save(booking);
+    }
+
+    public void cancelBookingByAppUser(String bookingId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        AppUser currentAppUser = appUserService.getAppUserByUsername(username);
+
+        if(!currentAppUser.getBookingHistory()
+                .stream()
+                .anyMatch(b -> b.getId().equals(bookingId))) {
+            throw new RuntimeException("Booking id provided is not current user's booking, id = "+bookingId);
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+
+        if (!booking.getCurrentStatus().canTransitionTo(BookingStatus.CANCELLED_BY_APPUSER)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid booking status transition: %s -> %s", booking.getCurrentStatus(), BookingStatus.CANCELLED_BY_APPUSER)
+            );
+        }
+
+        booking.setAppUserEligibleForRefund(booking.getCurrentStatus() == BookingStatus.STARTED);
+        booking.setCurrentStatus(BookingStatus.CANCELLED_BY_APPUSER);
+        booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.CANCELLED_BY_APPUSER, LocalDateTime.now()));
+
+        bookingRepository.save(booking);
+    }
+
+    public void cancelBookingByWorkshopUser(BookingRequestOtp bookingRequestOtp) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!currentWorkShopUser.getBookingHistory()
+                .stream()
+                .anyMatch(b -> b.getId().equals(bookingRequestOtp.getId()))) {
+            throw new RuntimeException("Booking id provided is not current user's booking, id = " + bookingRequestOtp.getId());
+        }
+
+        Booking booking = bookingRepository.findById(bookingRequestOtp.getId())
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (otpService.isOtpExpired(booking.getOtpExpiry())) {
+            throw new RuntimeException("OTP expired. Please regenerate.");
+        }
+
+        if (!booking.getOtp().equals(bookingRequestOtp.getOtp())) {
+            throw new RuntimeException("Invalid OTP.");
+        }
+
+        if (!booking.getCurrentStatus().canTransitionTo(BookingStatus.CANCELLED_BY_WORKSHOPUSER)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid booking status transition: %s -> %s", booking.getCurrentStatus(), BookingStatus.CANCELLED_BY_WORKSHOPUSER)
+            );
+        }
+
+        if(booking.getCurrentStatus() == BookingStatus.STARTED) {
+            booking.setCurrentStatus(BookingStatus.REJECTED);
+            booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.REJECTED, LocalDateTime.now()));
+        } else if(booking.getCurrentStatus() == BookingStatus.REPAIRING) {
+            booking.setCurrentStatus(BookingStatus.INCOMPLETE);
+            booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.INCOMPLETE, LocalDateTime.now()));
+        } else {
+            booking.setCurrentStatus(BookingStatus.CANCELLED_BY_WORKSHOPUSER);
+            booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.CANCELLED_BY_WORKSHOPUSER, LocalDateTime.now()));
+        }
+        booking.setAppUserEligibleForRefund(true);
+        booking.setOtp(null);
         bookingRepository.save(booking);
     }
 }
