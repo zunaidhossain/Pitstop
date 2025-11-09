@@ -127,4 +127,26 @@ public class BookingController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
+    // Role should be APP_USER
+    @PostMapping("/cancelBooking/{bookingId}")
+    public ResponseEntity<?> cancelByAppUser(@PathVariable String bookingId) {
+        try {
+            bookingService.cancelBookingByAppUser(bookingId);
+            return new ResponseEntity<>("Booking Successfully Cancelled!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Role should be WORKSHOP_USER
+    @PostMapping("/cancelBooking")
+    public ResponseEntity<?> cancelByWorkShopUser(@RequestBody BookingRequestOtp bookingRequestOtp) {
+        try {
+            bookingService.cancelBookingByWorkshopUser(bookingRequestOtp);
+            return new ResponseEntity<>("Booking Successfully Cancelled!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 }
