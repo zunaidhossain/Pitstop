@@ -52,6 +52,7 @@ public class BookingServiceImplTest {
     @BeforeAll
     public void setUpOnce() {
         workshopUserRepository.deleteByUsername("xxxx_xxxx_workshop_user");
+        appUserRepository.deleteByUsername("test_app_user_001");
         // AppUser Set-Up
         appUser = new AppUser();
         appUser.setName("Test App User");
