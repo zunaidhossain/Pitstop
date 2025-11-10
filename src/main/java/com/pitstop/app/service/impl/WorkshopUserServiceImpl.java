@@ -5,6 +5,7 @@ import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
+import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.WorkshopService;
@@ -114,6 +115,11 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         workshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
         updateWorkshopUserDetails(workshopUser);
         return "Address added successfully";
+    }
+
+    public WorkshopUser getWorkshopUserByUsername(String username) {
+        return workshopUserRepository.findByUsername(username)
+                .orElseThrow(()-> new RuntimeException("WorkshopUser not found with username :"+username));
     }
 
     public WorkshopStatusResponse openWorkshop(String username) {

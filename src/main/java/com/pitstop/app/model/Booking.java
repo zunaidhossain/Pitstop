@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -43,9 +44,14 @@ public class Booking {
     private String appUserId;
     private String workshopUserId;
 
+    List<BookingStatusWithTimeStamp> bookingStatusHistory;
+    Boolean appUserEligibleForRefund = null;
+
     public Booking(double amount, String vehicleDetails, String appUserId) {
         this.amount = amount;
         this.vehicleDetails = vehicleDetails;
         this.appUserId = appUserId;
+        this.bookingStatusHistory = new ArrayList<>();
+        bookingStatusHistory.add(new BookingStatusWithTimeStamp(currentStatus, LocalDateTime.now()));
     }
 }
