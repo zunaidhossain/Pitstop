@@ -116,6 +116,12 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         updateWorkshopUserDetails(workshopUser);
         return "Address added successfully";
     }
+
+    public WorkshopUser getWorkshopUserByUsername(String username) {
+        return workshopUserRepository.findByUsername(username)
+                .orElseThrow(()-> new RuntimeException("WorkshopUser not found with username :"+username));
+    }
+
     public WorkshopStatusResponse openWorkshop(String username) {
         WorkshopUser workshopUser = workshopUserRepository.findByUsername(username)
                 .orElseThrow(()-> new ResourceNotFoundException("Workshop not found with username : "+username));
