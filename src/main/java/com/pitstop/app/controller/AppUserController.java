@@ -1,12 +1,16 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.dto.AddressRequest;
+import com.pitstop.app.dto.AppUserRequest;
+import com.pitstop.app.dto.AppUserResponse;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -34,5 +38,20 @@ public class AppUserController {
     public ResponseEntity<String> changeDefaultAddress(@RequestBody AddressRequest addressRequest) {
         return new ResponseEntity<>(appUserService.changeDefaultAddress(addressRequest),HttpStatus.OK);
     }
-
+    @GetMapping("/me")
+    public ResponseEntity<AppUserResponse> getCurrentUserDetails(){
+        return new ResponseEntity<>(appUserService.getAppUserDetails(),HttpStatus.OK);
+    }
+    @PutMapping("/me/update")
+    public ResponseEntity<String> updateUserDetails(@RequestBody AppUserRequest appUserRequest) {
+        return new ResponseEntity<>(appUserService.updateAppUser(appUserRequest),HttpStatus.OK);
+    }
+    @PutMapping("/me/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody AppUserRequest appUserRequest) {
+        return new ResponseEntity<>(appUserService.changePassword(appUserRequest),HttpStatus.OK);
+    }
+    @DeleteMapping("/me/delete")
+    public ResponseEntity<?> deleteAppUserDetails() {
+        return new ResponseEntity<>(appUserService.deleteAppUser(),HttpStatus.OK);
+    }
 }

@@ -1,8 +1,12 @@
 package com.pitstop.app.service;
 
 import com.pitstop.app.dto.AddressRequest;
+import com.pitstop.app.dto.AppUserRequest;
+import com.pitstop.app.dto.AppUserResponse;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
+import org.springframework.http.ResponseEntity;
+
 import java.util.List;
 
 public interface AppUserService {
@@ -13,4 +17,12 @@ public interface AppUserService {
     String addAddress(AddressRequest address);
 
     String changeDefaultAddress(AddressRequest addressRequest);
+
+    String updateAppUser(AppUserRequest appUserRequest);
+
+    AppUserResponse getAppUserDetails();
+
+    ResponseEntity<?> changePassword(AppUserRequest appUserRequest);
+
+    ResponseEntity<?>  deleteAppUser();
 }
