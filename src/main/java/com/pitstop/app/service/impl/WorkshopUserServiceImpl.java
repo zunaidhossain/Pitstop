@@ -221,4 +221,71 @@ public class WorkshopUserServiceImpl implements WorkshopService {
             throw new RuntimeException("Error fetching coordinates for: " + addressPlainText + " | " + e.getMessage(), e);
         }
     }
+    @Override
+    public WorkshopUserResponse getWorkshopUserDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        WorkshopUser currentWorkshopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
+
+        WorkshopUserResponse workshopUserResponse = new WorkshopUserResponse();
+        workshopUserResponse.setUsername(currentWorkshopUser.getUsername());
+        workshopUserResponse.setEmail(currentWorkshopUser.getEmail());
+        workshopUserResponse.setAddress(currentWorkshopUser.getWorkshopAddress());
+
+        return workshopUserResponse;
+    }
+
+    @Override
+    public String updateWorkshopUser(WorkshopUserRequest workshopUserRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        WorkshopUser currentWorkshopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
+
+        if(workshopUserRequest.getName() != null) {
+            currentWorkshopUser.setName(workshopUserRequest.getName());
+        }
+        if(workshopUserRequest.getEmail() != null) {
+            currentWorkshopUser.setEmail(workshopUserRequest.getEmail());
+        }
+        if(workshopUserRequest.getUsername() != null) {
+            currentWorkshopUser.setUsername(workshopUserRequest.getUsername());
+        }
+
+        updateWorkshopUserDetails(currentWorkshopUser);
+
+        return "AppUser Details updated successfully";
+    }
+
+    @Override
+    public ResponseEntity<?> changePassword(WorkshopUserRequest workshopUserRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        WorkshopUser currentWorkshopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(()-> new ResourceNotFoundException("Workshop not found"));
+
+        String oldPassword = currentWorkshopUser.getPassword();
+        String newPassword = workshopUserRequest.getPassword();
+        if(newPassword.equals(oldPassword)) {
+            return new ResponseEntity<>("Change Password cannot be same", HttpStatusCode.valueOf(500));
+        }
+
+        currentWorkshopUser.setPassword(newPassword);
+        currentWorkshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+        updateWorkshopUserDetails(currentWorkshopUser);
+        return new ResponseEntity<>("Password changed successfully", HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<?> deleteAppUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        WorkshopUser currentWorkshopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        workshopUserRepository.delete(currentWorkshopUser);
+        return new ResponseEntity<>("AppUser Deleted successfully", HttpStatus.OK);
+    }
 }
