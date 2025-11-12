@@ -126,4 +126,9 @@ public class AppUserServiceImplTest {
             assertFalse(updatedAppUser.getUserAddress().isEmpty());
 
     }
+    @AfterAll
+    public void tearDownAll() {
+        SecurityContextHolder.clearContext();
+        appUserRepository.deleteByUsername("xxxx_xxxx_app_user");
+    }
 }

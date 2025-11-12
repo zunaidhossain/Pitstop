@@ -1,10 +1,7 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.BookingRequestOtp;
-import com.pitstop.app.dto.BookingResponse;
-import com.pitstop.app.dto.BookingStatusResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
 import com.pitstop.app.model.WorkshopUser;
@@ -16,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,6 +30,9 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
 
     @Autowired
     private WorkshopUserServiceImpl workshopUserService;
+
+    @Autowired
+    private BookingHistoryServiceImpl bookingHistoryService;
 
     @Autowired
     private AppUserRepository appUserRepository;
@@ -471,6 +473,20 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
 
             SecurityContextHolder.clearContext();
         }
+    }
+
+    @Order(8)
+    @Test
+    @DisplayName("Check the bookingHistoryImpl for WorkShopUser")
+    void bookingHistoryImplCheckWorkShopUser() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        List<WorkShopUserBookingHistoryResponse> bookingHistoryForWorkShopUser = bookingHistoryService.getBookingHistoryForWorkShopUser();
+        assertEquals(5, bookingHistoryForWorkShopUser.size());
+
+        SecurityContextHolder.clearContext();
     }
 
     @AfterAll

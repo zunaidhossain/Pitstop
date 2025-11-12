@@ -348,6 +348,9 @@ public class BookingServiceImpl implements BookingService {
 
         if(booking.getCurrentStatus() == BookingStatus.STARTED) {
             booking.setCurrentStatus(BookingStatus.REJECTED);
+            booking.setWorkshopUserId(currentWorkShopUser.getId());
+            booking.setWorkShopName(currentWorkShopUser.getName());
+            booking.setWorkShopAddress(currentWorkShopUser.getWorkshopAddress());
             booking.getBookingStatusHistory().add(new BookingStatusWithTimeStamp(BookingStatus.REJECTED, LocalDateTime.now()));
         } else if(booking.getCurrentStatus() == BookingStatus.REPAIRING) {
             booking.setCurrentStatus(BookingStatus.INCOMPLETE);
