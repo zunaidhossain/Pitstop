@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -41,7 +42,10 @@ public class Booking {
 //    @DBRef
 //    private WorkshopUser workshopUser;
 
+    @Indexed
     private String appUserId;
+
+    @Indexed
     private String workshopUserId;
 
     List<BookingStatusWithTimeStamp> bookingStatusHistory;
