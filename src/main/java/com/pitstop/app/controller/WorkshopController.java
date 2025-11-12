@@ -51,6 +51,8 @@ public class WorkshopController {
     @GetMapping("/getBookingHistory")
     public ResponseEntity<?> getBookingHistoryForWorkShopUser() {
         return new ResponseEntity<>(bookingHistoryService.getBookingHistoryForWorkShopUser(), HttpStatus.OK);
+    }
+
      @GetMapping("/me")
      public ResponseEntity<WorkshopUserResponse> getCurrentWorkshopUser(){
          return new ResponseEntity<>(workshopService.getWorkshopUserDetails(),HttpStatus.OK);
