@@ -5,6 +5,7 @@ import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.WorkshopStatusResponse;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.service.impl.BookingHistoryServiceImpl;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.List;
 public class WorkshopController {
 
     private final WorkshopUserServiceImpl workshopService;
+    private final BookingHistoryServiceImpl bookingHistoryService;
 
     // Role should be NORMAL_WORKSHOP_USER
     // Remove {workshopUserId} part from path variable after auth is implemented
@@ -46,4 +48,9 @@ public class WorkshopController {
      public ResponseEntity<String> addAddress(@RequestBody AddressRequest address){
          return new ResponseEntity<>(workshopService.addAddress(address),HttpStatus.OK);
      }
+
+    @GetMapping("/getBookingHistory")
+    public ResponseEntity<?> getBookingHistoryForWorkShopUser() {
+        return new ResponseEntity<>(bookingHistoryService.getBookingHistoryForWorkShopUser(), HttpStatus.OK);
+    }
 }

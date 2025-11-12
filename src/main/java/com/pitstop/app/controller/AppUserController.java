@@ -3,6 +3,7 @@ package com.pitstop.app.controller;
 import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
+import com.pitstop.app.service.impl.BookingHistoryServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class AppUserController {
 
     private final AppUserServiceImpl appUserService;
+    private final BookingHistoryServiceImpl bookingHistoryService;
 
     /*
     Create Secured endpoints / API for the below functionality:
@@ -33,6 +35,11 @@ public class AppUserController {
     @PutMapping("/change-default-address")
     public ResponseEntity<String> changeDefaultAddress(@RequestBody AddressRequest addressRequest) {
         return new ResponseEntity<>(appUserService.changeDefaultAddress(addressRequest),HttpStatus.OK);
+    }
+
+    @GetMapping("/getBookingHistory")
+    public ResponseEntity<?> getBookingHistoryForAppUser() {
+        return new ResponseEntity<>(bookingHistoryService.getBookingHistoryForAppUser(), HttpStatus.OK);
     }
 
 }
