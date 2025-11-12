@@ -1,13 +1,11 @@
 package com.pitstop.app.service.impl;
 
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.AddressResponse;
-import com.pitstop.app.dto.AppUserLoginRequest;
-import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
+import com.pitstop.app.model.Booking;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.service.AppUserService;
 import com.pitstop.app.utils.JwtUtil;
@@ -197,7 +195,6 @@ public class AppUserServiceImpl implements AppUserService {
 
         return "Default address updated successfully";
     }
-
     public ResponseEntity<?> loginAppUser(AppUserLoginRequest appUser){
         try {
             manager.authenticate(
@@ -286,5 +283,73 @@ public class AppUserServiceImpl implements AppUserService {
         } catch (Exception e) {
             throw new RuntimeException("Error fetching coordinates for: " + addressPlainText + " | " + e.getMessage(), e);
         }
+    }
+    @Override
+    public String updateAppUser(AppUserRequest appUserRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        AppUser currentAppUser = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if(appUserRequest.getName() != null) {
+            currentAppUser.setName(appUserRequest.getName());
+        }
+        if(appUserRequest.getEmail() != null) {
+            currentAppUser.setEmail(appUserRequest.getEmail());
+        }
+        if(appUserRequest.getUsername() != null) {
+            currentAppUser.setUsername(appUserRequest.getUsername());
+        }
+
+        updateAppUserDetails(currentAppUser);
+
+        return "AppUser Details updated successfully";
+    }
+    @Override
+    public AppUserResponse getAppUserDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        AppUser currentAppUser = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        AppUserResponse appUserResponse = new AppUserResponse();
+        appUserResponse.setName(currentAppUser.getName());
+        appUserResponse.setEmail(currentAppUser.getEmail());
+        appUserResponse.setAddresses(currentAppUser.getUserAddress());
+
+        return appUserResponse;
+    }
+    @Override
+    public ResponseEntity<?> changePassword(AppUserRequest appUserRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        AppUser currentAppUser = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        String oldPassword = currentAppUser.getPassword();
+        String newPassword = appUserRequest.getPassword();
+        if(newPassword.equals(oldPassword)) {
+            return new ResponseEntity<>("Change Password cannot be same", HttpStatusCode.valueOf(500));
+        }
+
+        currentAppUser.setPassword(newPassword);
+        currentAppUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+        updateAppUserDetails(currentAppUser);
+        return new ResponseEntity<>("Password changed successfully", HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<?> deleteAppUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        AppUser currentAppUser = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        appUserRepository.delete(currentAppUser);
+        return new ResponseEntity<>("AppUser Deleted successfully", HttpStatus.OK);
     }
 }

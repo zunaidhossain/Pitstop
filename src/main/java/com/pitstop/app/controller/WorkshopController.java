@@ -1,8 +1,7 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.constants.WorkshopStatus;
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.BookingHistoryServiceImpl;
@@ -52,5 +51,20 @@ public class WorkshopController {
     @GetMapping("/getBookingHistory")
     public ResponseEntity<?> getBookingHistoryForWorkShopUser() {
         return new ResponseEntity<>(bookingHistoryService.getBookingHistoryForWorkShopUser(), HttpStatus.OK);
+     @GetMapping("/me")
+     public ResponseEntity<WorkshopUserResponse> getCurrentWorkshopUser(){
+         return new ResponseEntity<>(workshopService.getWorkshopUserDetails(),HttpStatus.OK);
+     }
+     @PutMapping("/me/update")
+    public ResponseEntity<String> updateWorkshopUser(@RequestBody WorkshopUserRequest workshopUserRequest){
+         return new ResponseEntity<>(workshopService.updateWorkshopUser(workshopUserRequest),HttpStatus.OK);
+     }
+    @PutMapping("/me/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody WorkshopUserRequest workshopUserRequest) {
+        return new ResponseEntity<>(workshopService.changePassword(workshopUserRequest),HttpStatus.OK);
+    }
+    @DeleteMapping("/me/delete")
+    public ResponseEntity<?> deleteAppUserDetails() {
+        return new ResponseEntity<>(workshopService.deleteAppUser(),HttpStatus.OK);
     }
 }
