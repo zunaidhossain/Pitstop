@@ -1,10 +1,7 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.BookingRequestOtp;
-import com.pitstop.app.dto.BookingResponse;
-import com.pitstop.app.dto.BookingStatusResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
 import com.pitstop.app.model.WorkshopUser;
@@ -16,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +31,9 @@ public class BookingServiceCancellationScenariosForAppUserTest {
 
     @Autowired
     private WorkshopUserServiceImpl workshopUserService;
+
+    @Autowired
+    private BookingHistoryServiceImpl bookingHistoryService;
 
     @Autowired
     private AppUserRepository appUserRepository;
@@ -229,6 +231,20 @@ public class BookingServiceCancellationScenariosForAppUserTest {
 
     @Order(1)
     @Test
+    @DisplayName("Check the bookingHistoryImpl for AppUser")
+    void bookingHistoryImplCheckAppUser() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        List<AppUserBookingHistoryResponse> bookingHistoryForAppUser = bookingHistoryService.getBookingHistoryForAppUser();
+        assertEquals(4, bookingHistoryForAppUser.size());
+
+        SecurityContextHolder.clearContext();
+    }
+
+    @Order(2)
+    @Test
     @DisplayName("Negative Testing Scenario 1: STARTED -> ON_THE_WAY")
     void negativeTestingStartedToOnTheWay() {
         UsernamePasswordAuthenticationToken auth =
@@ -242,7 +258,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Order(2)
+    @Order(3)
     @Test
     @DisplayName("Cancel STARTED BOOKING and Check")
     void toCancelStartedBooking() {
@@ -257,7 +273,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
 
         SecurityContextHolder.clearContext();
     }
-    @Order(3)
+    @Order(4)
     @Test
     @DisplayName("Cancel BOOKED BOOKING and Check")
     void toCancelBookedBooking() {
@@ -273,7 +289,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Order(4)
+    @Order(5)
     @Test
     @DisplayName("Cancel ON_THE_WAY BOOKING and Check")
     void toCancelOnTheWayBooking() {
@@ -289,7 +305,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Order(5)
+    @Order(6)
     @Test
     @DisplayName("Negative Testing Scenario 2: WAITING -> ON_THE_WAY")
     void negativeTestingWaitingToBooked() {
@@ -304,7 +320,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Order(6)
+    @Order(7)
     @Test
     @DisplayName("Cancel WAITING BOOKING and Check")
     void toCancelWaitingBooking() {
@@ -320,7 +336,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Order(7)
+    @Order(8)
     @Test
     @DisplayName("Negative Testing Scenario 3: CANCELLED_BY_APPUSER -> ON_THE_WAY")
     void negativeTestingCancelToOnTheWay() {
