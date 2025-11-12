@@ -118,4 +118,10 @@ public class WorkshopUserServiceImplTest {
 
         assertNotNull(updated.getWorkshopAddress());
     }
+
+    @AfterAll
+    public void tearDownAll() {
+        SecurityContextHolder.clearContext();
+        workshopUserRepository.deleteByUsername("xxxx_xxxx_workshop_user");
+    }
 }
