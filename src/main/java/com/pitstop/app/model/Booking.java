@@ -32,8 +32,8 @@ public class Booking {
     private LocalDateTime bookingStartedTime = LocalDateTime.now();
     private LocalDateTime bookingCompletedTime;
 
-    private double ratingAppUserToWorkshop = 0.0;
-    private double ratingWorkshopToAppUser = 0.0;
+    private int ratingAppUserToWorkshop = 0;
+    private int ratingWorkshopToAppUser = 0;
 
     //Lets you easily link Booking to an AppUser and WorkshopUser if you plan to display booking history for each.
 //    @DBRef
