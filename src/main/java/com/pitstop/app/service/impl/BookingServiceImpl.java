@@ -2,10 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.constants.WorkshopStatus;
-import com.pitstop.app.dto.BookingRequestOtp;
-import com.pitstop.app.dto.BookingResponse;
-import com.pitstop.app.dto.BookingStatusResponse;
-import com.pitstop.app.dto.WorkshopStatusResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
 import com.pitstop.app.model.BookingStatusWithTimeStamp;
@@ -362,5 +359,94 @@ public class BookingServiceImpl implements BookingService {
         booking.setAppUserEligibleForRefund(true);
         booking.setOtp(null);
         bookingRepository.save(booking);
+    }
+
+    public void giveRatingToAppUser(AppUserRatingRequest appUserRatingRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!currentWorkShopUser.getBookingHistory()
+                .stream()
+                .anyMatch(b -> b.getId().equals(appUserRatingRequest.getBookingId()))) {
+            throw new RuntimeException("Booking id provided is not current user's booking, id = " + appUserRatingRequest.getBookingId());
+        }
+
+        Booking booking = bookingRepository.findById(appUserRatingRequest.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if(booking.getCurrentStatus() != BookingStatus.COMPLETED)
+            throw new RuntimeException("Ratings cannot be set unless the booking is in COMPLETED state.");
+
+        if(booking.getRatingWorkshopToAppUser() > 0) {
+            throw new RuntimeException("Rating already added to AppUser for bookingId = "+booking.getId());
+        }
+
+        booking.setRatingWorkshopToAppUser(appUserRatingRequest.getRating());
+        AppUser appUser = appUserService.getAppUserById(booking.getAppUserId());
+
+        if(appUser.getRatingsList().size() < 5) {
+            appUser.getRatingsList().add(appUserRatingRequest.getRating());
+        } else if(appUser.getRatingsList().size() == 5){
+            double total  = appUser.getRating();
+            appUser.getRatingsList().add(appUserRatingRequest.getRating());
+            for(int n : appUser.getRatingsList()) {
+                total += n;
+            }
+            appUser.setRating((double) total / 7);
+        } else  {
+            double total = appUser.getRating() * appUser.getRatingsList().size();
+            total += appUserRatingRequest.getRating();
+            appUser.getRatingsList().add(appUserRatingRequest.getRating());
+            double newRating = (double) total /  appUser.getRatingsList().size();
+            appUser.setRating(newRating);
+        }
+        bookingRepository.save(booking);
+        appUserService.updateAppUserDetails(appUser);
+    }
+
+    public void giveRatingToWorkShopUser(WorkShopUserRatingRequest workShopUserRatingRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        AppUser currentAppUser = appUserService.getAppUserByUsername(username);
+
+        if(!currentAppUser.getBookingHistory()
+                .stream()
+                .anyMatch(b -> b.getId().equals(workShopUserRatingRequest.getBookingId()))) {
+            throw new RuntimeException("Booking id provided is not current user's booking, id = "+workShopUserRatingRequest.getBookingId());
+        }
+
+        Booking booking = bookingRepository.findById(workShopUserRatingRequest.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if(booking.getCurrentStatus() != BookingStatus.COMPLETED)
+            throw new RuntimeException("Ratings cannot be set unless the booking is in COMPLETED state.");
+
+        if(booking.getRatingAppUserToWorkshop() > 0) {
+            throw new RuntimeException("Rating already added to WorkShopUser for bookingId = "+booking.getId());
+        }
+
+        booking.setRatingAppUserToWorkshop(workShopUserRatingRequest.getRating());
+        WorkshopUser workShopUser = workshopUserService.getWorkshopUserById(booking.getWorkshopUserId());
+
+        if(workShopUser.getRatingsList().size() < 5) {
+            workShopUser.getRatingsList().add(workShopUserRatingRequest.getRating());
+        } else if(workShopUser.getRatingsList().size() == 5){
+            double total  = workShopUser.getRating();
+            workShopUser.getRatingsList().add(workShopUserRatingRequest.getRating());
+            for(int n : workShopUser.getRatingsList()) {
+                total += n;
+            }
+            workShopUser.setRating((double) total / 7);
+        } else  {
+            double total = workShopUser.getRating() * workShopUser.getRatingsList().size();
+            total += workShopUserRatingRequest.getRating();
+            workShopUser.getRatingsList().add(workShopUserRatingRequest.getRating());
+            double newRating = (double) total /  workShopUser.getRatingsList().size();
+            workShopUser.setRating(newRating);
+        }
+        bookingRepository.save(booking);
+        workshopUserService.updateWorkshopUserDetails(workShopUser);
     }
 }
