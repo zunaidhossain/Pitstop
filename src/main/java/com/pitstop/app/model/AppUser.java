@@ -27,7 +27,8 @@ public class AppUser implements BaseUser{
 
     private List<Address> userAddress = new ArrayList<>();
     private double currentWalletBalance = 0.0;
-    private double rating = 0.0;
+    private double rating = 5.0;
+    private List<Integer> ratingsList = new ArrayList<>();
 
     @DBRef
     private List<Booking> bookingHistory = new ArrayList<>();
