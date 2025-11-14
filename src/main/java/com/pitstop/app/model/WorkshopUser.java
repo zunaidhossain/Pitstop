@@ -28,7 +28,8 @@ public class WorkshopUser implements BaseUser{
     private List<String> roles = List.of("WORKSHOP");
 
     private double currentWalletBalance = 0.0;
-    private double rating = 0.0;
+    private double rating = 5.0;
+    private List<Integer> ratingsList = new ArrayList<>();
 
     @DBRef
     private List<Booking> bookingHistory = new ArrayList<>();

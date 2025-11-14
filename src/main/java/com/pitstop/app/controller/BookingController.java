@@ -149,4 +149,26 @@ public class BookingController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
+    // Role should be WORKSHOP_USER
+    @PostMapping("/giveRatingToAppUser")
+    public ResponseEntity<?> giveRatingToAppUser(@RequestBody AppUserRatingRequest appUserRatingRequest) {
+        try {
+            bookingService.giveRatingToAppUser(appUserRatingRequest);
+            return new ResponseEntity<>("Rating Successfully added for AppUser!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Role should be APP_USER
+    @PostMapping("/giveRatingToWorkShopUser")
+    public ResponseEntity<?> giveRatingToWorkShopUser(@RequestBody WorkShopUserRatingRequest workShopUserRatingRequest) {
+        try {
+            bookingService.giveRatingToWorkShopUser(workShopUserRatingRequest);
+            return new ResponseEntity<>("Rating Successfully added for WorkShopUser!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 }

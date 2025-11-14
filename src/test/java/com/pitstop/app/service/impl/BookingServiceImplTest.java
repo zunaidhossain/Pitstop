@@ -1,13 +1,9 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
-import com.pitstop.app.constants.WorkshopStatus;
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.BookingRequestOtp;
-import com.pitstop.app.dto.BookingResponse;
-import com.pitstop.app.dto.BookingStatusResponse;
-import com.pitstop.app.model.Address;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
+import com.pitstop.app.model.Booking;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
@@ -294,6 +290,56 @@ public class BookingServiceImplTest {
 
         BookingResponse b = bookingService.checkBookingStatus(bookingId);
         assertEquals(bookingStatus, b.getCurrentStatus());
+
+        SecurityContextHolder.clearContext();
+    }
+
+    @Order(14)
+    @Test
+    @DisplayName("Checking Rating for AppUser")
+    void checkRatingForAppUser() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        int ratingToAppUser = 4;
+
+        bookingService.giveRatingToAppUser(new AppUserRatingRequest(bookingId, ratingToAppUser));
+
+        assertThrows(RuntimeException.class, () -> {
+            bookingService.giveRatingToAppUser(new AppUserRatingRequest(bookingId, ratingToAppUser));
+        });
+
+        Booking booking = bookingService.getBookingById(bookingId);
+        assertEquals(ratingToAppUser, booking.getRatingWorkshopToAppUser());
+        appUser = appUserService.getAppUserById(appUser.getId());
+        assertEquals(1, appUser.getRatingsList().size());
+        assertEquals(ratingToAppUser, appUser.getRatingsList().getFirst());
+
+        SecurityContextHolder.clearContext();
+    }
+
+    @Order(15)
+    @Test
+    @DisplayName("Checking Rating for WorkShopUser")
+    void checkRatingForWorkShopUser() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        int ratingToWorkShopUser = 4;
+
+        bookingService.giveRatingToWorkShopUser(new WorkShopUserRatingRequest(bookingId, ratingToWorkShopUser));
+
+        assertThrows(RuntimeException.class, () -> {
+            bookingService.giveRatingToWorkShopUser(new WorkShopUserRatingRequest(bookingId, ratingToWorkShopUser));
+        });
+
+        Booking booking = bookingService.getBookingById(bookingId);
+        assertEquals(ratingToWorkShopUser, booking.getRatingAppUserToWorkshop());
+        workshopUser = workshopUserService.getWorkshopUserById(booking.getWorkshopUserId());
+        assertEquals(1, workshopUser.getRatingsList().size());
+        assertEquals(ratingToWorkShopUser, workshopUser.getRatingsList().getFirst());
 
         SecurityContextHolder.clearContext();
     }
