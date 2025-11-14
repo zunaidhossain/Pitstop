@@ -5,7 +5,6 @@ import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
-import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.WorkshopService;
@@ -32,7 +31,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -287,5 +285,18 @@ public class WorkshopUserServiceImpl implements WorkshopService {
 
         workshopUserRepository.delete(currentWorkshopUser);
         return new ResponseEntity<>("AppUser Deleted successfully", HttpStatus.OK);
+    }
+
+    @Override
+    public PersonalInfoResponse getPersonalProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return new PersonalInfoResponse(currentWorkShopUser.getName(),
+                currentWorkShopUser.getUsername(), currentWorkShopUser.getEmail(),
+                Math.round(currentWorkShopUser.getRating() * 10.0) / 10.0);
     }
 }

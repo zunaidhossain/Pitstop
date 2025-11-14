@@ -3,7 +3,7 @@ package com.pitstop.app.service;
 import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.AppUserRequest;
 import com.pitstop.app.dto.AppUserResponse;
-import com.pitstop.app.model.Address;
+import com.pitstop.app.dto.PersonalInfoResponse;
 import com.pitstop.app.model.AppUser;
 import org.springframework.http.ResponseEntity;
 
@@ -25,4 +25,6 @@ public interface AppUserService {
     ResponseEntity<?> changePassword(AppUserRequest appUserRequest);
 
     ResponseEntity<?>  deleteAppUser();
+
+    PersonalInfoResponse getPersonalProfile();
 }
