@@ -3,15 +3,13 @@ package com.pitstop.app.controller;
 import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.AppUserRequest;
 import com.pitstop.app.dto.AppUserResponse;
-import com.pitstop.app.model.Address;
+import com.pitstop.app.dto.PersonalInfoResponse;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import com.pitstop.app.service.impl.BookingHistoryServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -61,5 +59,9 @@ public class AppUserController {
     @DeleteMapping("/me/delete")
     public ResponseEntity<?> deleteAppUserDetails() {
         return new ResponseEntity<>(appUserService.deleteAppUser(),HttpStatus.OK);
+    }
+    @GetMapping("/profile")
+    public ResponseEntity<PersonalInfoResponse> getPersonalInfo() {
+        return new ResponseEntity<>(appUserService.getPersonalProfile(),HttpStatus.OK);
     }
 }
