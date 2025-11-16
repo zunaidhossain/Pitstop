@@ -1,9 +1,6 @@
 package com.pitstop.app.controller;
 
-import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.*;
-import com.pitstop.app.model.Address;
-import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.BookingHistoryServiceImpl;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/workshops")
@@ -68,5 +63,9 @@ public class WorkshopController {
     @DeleteMapping("/me/delete")
     public ResponseEntity<?> deleteAppUserDetails() {
         return new ResponseEntity<>(workshopService.deleteAppUser(),HttpStatus.OK);
+    }
+    @GetMapping("/profile")
+    public ResponseEntity<PersonalInfoResponse> getPersonalInfo() {
+        return new ResponseEntity<>(workshopService.getPersonalProfile(),HttpStatus.OK);
     }
 }

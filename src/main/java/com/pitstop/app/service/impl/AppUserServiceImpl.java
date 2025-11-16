@@ -5,7 +5,6 @@ import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.Booking;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.service.AppUserService;
 import com.pitstop.app.utils.JwtUtil;
@@ -351,5 +350,18 @@ public class AppUserServiceImpl implements AppUserService {
 
         appUserRepository.delete(currentAppUser);
         return new ResponseEntity<>("AppUser Deleted successfully", HttpStatus.OK);
+    }
+
+    @Override
+    public PersonalInfoResponse getPersonalProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        AppUser currentAppUser = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return new PersonalInfoResponse(currentAppUser.getName(),
+                currentAppUser.getUsername(), currentAppUser.getEmail(),
+                Math.round(currentAppUser.getRating() * 10.0) / 10.0);
     }
 }
