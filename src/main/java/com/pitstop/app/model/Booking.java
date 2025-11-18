@@ -1,6 +1,7 @@
 package com.pitstop.app.model;
 
 import com.pitstop.app.constants.BookingStatus;
+import com.pitstop.app.constants.PaymentStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,7 @@ public class Booking {
     private LocalDateTime otpExpiry;
 
     private BookingStatus currentStatus = BookingStatus.STARTED;
+    private PaymentStatus currentPaymentStatus = PaymentStatus.NOT_PAID;
     private LocalDateTime bookingStartedTime = LocalDateTime.now();
     private LocalDateTime bookingCompletedTime;
 
