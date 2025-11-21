@@ -240,10 +240,6 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        if(booking.getCurrentPaymentStatus() != PaymentStatus.PAID) {
-            log.warn("Payment status is ,{}",booking.getCurrentPaymentStatus());
-            throw new RuntimeException("OTP can only be generated before waiting status");
-        }
 
         String otp = otpService.generateOtp();
         LocalDateTime expiry = otpService.getExpiryTime();
@@ -269,6 +265,12 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = bookingRepository.findById(bookingRequestOtp.getId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if(bookingStatus == BookingStatus.WAITING ||  bookingStatus == BookingStatus.REPAIRING || bookingStatus == BookingStatus.COMPLETED) {
+            if(booking.getCurrentPaymentStatus() != PaymentStatus.PAID) {
+                throw new RuntimeException("Booking status "+ bookingStatus +" cannot be set as payment status is " + booking.getCurrentPaymentStatus());
+            }
+        }
 
         if (!booking.getCurrentStatus().canTransitionTo(bookingStatus)) {
             throw new IllegalArgumentException(
