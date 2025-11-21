@@ -1,9 +1,11 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
+import com.pitstop.app.constants.PaymentStatus;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
+import com.pitstop.app.model.Payment;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
@@ -15,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,6 +46,9 @@ public class BookingServiceCancellationScenariosForAppUserTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private PaymentServiceImpl paymentService;
 
     private AppUser appUser;
     private WorkshopUser workshopUser;
@@ -219,6 +225,13 @@ public class BookingServiceCancellationScenariosForAppUserTest {
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
                     SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    paymentService.initiatePayment(waitingBookingId);
+                    Optional<Booking> tempBooking = bookingRepository.findById(waitingBookingId);
+                    if(tempBooking.isPresent()) {
+                        tempBooking.get().setCurrentPaymentStatus(PaymentStatus.PAID);
+                        bookingRepository.save(tempBooking.get());
+                    }
 
                     bookingService.verifyOtpAndSetStatus(
                             new BookingRequestOtp(waitingBookingId, bookingStatusResponse.getOtp()), BookingStatus.WAITING);
