@@ -50,10 +50,14 @@ public class BookingServiceImplTest {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private VehicleServiceImpl vehicleService;
+
     private AppUser appUser;
     private WorkshopUser workshopUser;
     private String bookingId;
     private InitiatePaymentResponse initiatePaymentResponse = null;
+    private String vehicleId;
 
     @BeforeAll
     public void setUpOnce() {
@@ -96,7 +100,6 @@ public class BookingServiceImplTest {
             AddressRequest addressRequest = new AddressRequest();
             addressRequest.setLatitude(22.597693666787432);
             addressRequest.setLongitude(88.35945631449115);
-
             workshopUserService.addAddress(addressRequest);
             SecurityContextHolder.clearContext();
         }
@@ -111,7 +114,10 @@ public class BookingServiceImplTest {
                 new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        bookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "4 wheeler");
+        AddVehicleResponse addVehicleResponse = vehicleService.addFourWheeler(new AddVehicleRequest("Honda", "Civic", 1700));
+        vehicleId = addVehicleResponse.getVehicleId();
+
+        bookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
         assertNotNull(bookingId); // Check booking_id is created
 
         // Check booking exists in the repo
@@ -131,7 +137,7 @@ public class BookingServiceImplTest {
         BookingResponse b = bookingService.checkBookingStatus(bookingId);
         assertEquals(BookingStatus.STARTED, b.getCurrentStatus());
         assertEquals(1000, b.getAmount());
-        assertEquals("4 wheeler", b.getVehicleDetails());
+        assertEquals("Civic", b.getVehicleDetails().getModel());
         assertNotNull(b.getBookingStartedTime());
 
         SecurityContextHolder.clearContext();
