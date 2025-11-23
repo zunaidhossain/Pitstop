@@ -1,12 +1,14 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.BookingStatus;
+import com.pitstop.app.constants.PaymentStatus;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
+import com.pitstop.app.repository.PaymentRepository;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,9 +44,16 @@ public class BookingServiceImplTest {
     @Autowired
     private BookingRepository bookingRepository;
 
+    @Autowired
+    private PaymentServiceImpl paymentService;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
     private AppUser appUser;
     private WorkshopUser workshopUser;
     private String bookingId;
+    private InitiatePaymentResponse initiatePaymentResponse = null;
 
     @BeforeAll
     public void setUpOnce() {
@@ -203,6 +213,13 @@ public class BookingServiceImplTest {
                     new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
+            initiatePaymentResponse = paymentService.initiatePayment(bookingId);
+            Optional<Booking> tempBooking = bookingRepository.findById(bookingId);
+            if(tempBooking.isPresent()) {
+                tempBooking.get().setCurrentPaymentStatus(PaymentStatus.PAID);
+                bookingRepository.save(tempBooking.get());
+            }
+
             bookingService.verifyOtpAndSetStatus(
                     new BookingRequestOtp(bookingId, bookingStatusResponse.getOtp()), BookingStatus.WAITING);
 
@@ -350,5 +367,6 @@ public class BookingServiceImplTest {
         workshopUserRepository.deleteById(workshopUser.getId());
         appUserRepository.deleteById(appUser.getId());
         bookingRepository.deleteById(bookingId);
+        paymentRepository.deleteById(initiatePaymentResponse.getPaymentId());
     }
 }

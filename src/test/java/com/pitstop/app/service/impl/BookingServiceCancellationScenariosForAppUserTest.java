@@ -9,6 +9,7 @@ import com.pitstop.app.model.Payment;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
+import com.pitstop.app.repository.PaymentRepository;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,9 @@ public class BookingServiceCancellationScenariosForAppUserTest {
     @Autowired
     private PaymentServiceImpl paymentService;
 
+    @Autowired
+    private PaymentRepository paymentRepository;
+
     private AppUser appUser;
     private WorkshopUser workshopUser;
 
@@ -64,6 +68,8 @@ public class BookingServiceCancellationScenariosForAppUserTest {
 
     // Booking id to check cancellation By WorkShopUser (WAITING -> CANCELLED_BY_APPUSER)
     private String waitingBookingId;
+
+    private InitiatePaymentResponse initiatePaymentResponse = null;
 
 
     @BeforeAll
@@ -226,7 +232,7 @@ public class BookingServiceCancellationScenariosForAppUserTest {
                             new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
                     SecurityContextHolder.getContext().setAuthentication(auth);
 
-                    paymentService.initiatePayment(waitingBookingId);
+                    initiatePaymentResponse = paymentService.initiatePayment(waitingBookingId);
                     Optional<Booking> tempBooking = bookingRepository.findById(waitingBookingId);
                     if(tempBooking.isPresent()) {
                         tempBooking.get().setCurrentPaymentStatus(PaymentStatus.PAID);
@@ -373,5 +379,6 @@ public class BookingServiceCancellationScenariosForAppUserTest {
         bookingRepository.deleteById(bookedBookingId);
         bookingRepository.deleteById(onTheWayBookingId);
         bookingRepository.deleteById(waitingBookingId);
+        paymentRepository.deleteById(initiatePaymentResponse.getPaymentId());
     }
 }
