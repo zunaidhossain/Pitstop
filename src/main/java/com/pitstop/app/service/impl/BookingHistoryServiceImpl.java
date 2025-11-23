@@ -1,6 +1,7 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AppUserBookingHistoryResponse;
+import com.pitstop.app.dto.VehicleDetailsResponse;
 import com.pitstop.app.dto.WorkShopUserBookingHistoryResponse;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.Booking;
@@ -65,7 +66,8 @@ public class BookingHistoryServiceImpl implements BookingHistoryService {
                 .workShopName(b.getWorkShopName())
                 .workshopAddress(b.getWorkShopAddress())
                 .amount(b.getAmount())
-                .vehicleDetails(b.getVehicleDetails())
+                .vehicleDetails(new VehicleDetailsResponse(b.getVehicle().getId(), b.getVehicle().getVehicleType(),
+                        b.getVehicle().getBrand(), b.getVehicle().getModel(), b.getVehicle().getEngineCapacity()))
                 .time(b.getBookingStartedTime())  // ← always original booking start time
                 .build();
     }
@@ -77,7 +79,8 @@ public class BookingHistoryServiceImpl implements BookingHistoryService {
                 .currentStatus(b.getCurrentStatus())
                 .appUserId(b.getAppUserId())
                 .amount(b.getAmount())
-                .vehicleDetails(b.getVehicleDetails())
+                .vehicleDetails(new VehicleDetailsResponse(b.getVehicle().getId(), b.getVehicle().getVehicleType(),
+                        b.getVehicle().getBrand(), b.getVehicle().getModel(), b.getVehicle().getEngineCapacity()))
                 .time(b.getBookingStartedTime())  // ← always original booking start time
                 .build();
     }

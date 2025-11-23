@@ -25,6 +25,9 @@ public class AppUser implements BaseUser{
     private String password;
     private List<String> roles = List.of("USER");
 
+    @DBRef
+    private List<Vehicle> vehicleList = new ArrayList<>();
+
     private List<Address> userAddress = new ArrayList<>();
     private double currentWalletBalance = 0.0;
     private double rating = 5.0;

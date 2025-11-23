@@ -22,7 +22,7 @@ public class Booking {
     @Id
     private String id;
     private double amount;
-    private String vehicleDetails;
+    private Vehicle vehicle;
 
     private String workShopName;
     private Address workShopAddress;
@@ -53,9 +53,9 @@ public class Booking {
     List<BookingStatusWithTimeStamp> bookingStatusHistory;
     Boolean appUserEligibleForRefund = null;
 
-    public Booking(double amount, String vehicleDetails, String appUserId) {
+    public Booking(double amount, Vehicle vehicle, String appUserId) {
         this.amount = amount;
-        this.vehicleDetails = vehicleDetails;
+        this.vehicle = vehicle;
         this.appUserId = appUserId;
         this.bookingStatusHistory = new ArrayList<>();
         bookingStatusHistory.add(new BookingStatusWithTimeStamp(currentStatus, LocalDateTime.now()));
