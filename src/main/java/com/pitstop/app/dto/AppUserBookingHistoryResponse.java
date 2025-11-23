@@ -2,6 +2,7 @@ package com.pitstop.app.dto;
 
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.model.Address;
+import com.pitstop.app.model.Vehicle;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class AppUserBookingHistoryResponse {
     private Address workshopAddress;
 
     private double amount;
-    private String vehicleDetails;
+    private VehicleDetailsResponse vehicleDetails;
 
     private LocalDateTime time;
 }

@@ -3,6 +3,7 @@ package com.pitstop.app.dto;
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.constants.PaymentStatus;
 import com.pitstop.app.model.Address;
+import com.pitstop.app.model.Vehicle;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 public class BookingResponse {
     private String id;
     private double amount;
-    private String vehicleDetails;
+    private VehicleDetailsResponse vehicleDetails;
     private BookingStatus currentStatus;
     private LocalDateTime bookingStartedTime;
     private LocalDateTime bookingCompletedTime;

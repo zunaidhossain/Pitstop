@@ -1,5 +1,6 @@
 package com.pitstop.app.dto;
 
+import com.pitstop.app.model.Vehicle;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,5 +12,5 @@ public class RequestBooking {
     private String appUserId;
     private String workShopUserId;
     private double amount;
-    private String vehicleDetails;
+    private String vehicleId;
 }
