@@ -3,9 +3,7 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.constants.PaymentStatus;
 import com.pitstop.app.dto.*;
-import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.Booking;
-import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.model.*;
 import com.pitstop.app.repository.AppUserRepository;
 import com.pitstop.app.repository.BookingRepository;
 import com.pitstop.app.repository.PaymentRepository;
@@ -52,6 +50,9 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private VehicleServiceImpl vehicleService;
+
     private AppUser appUser;
     private WorkshopUser workshopUser;
 
@@ -70,6 +71,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
     // Booking id to check cancellation By WorkShopUser (REPAIRING -> INCOMPLETE)
     private String repairingBookingId;
 
+    private String vehicleId;
 
     private InitiatePaymentResponse initiatePaymentResponseForWaitingBooking = null;
     private InitiatePaymentResponse initiatePaymentResponseForRepairingBooking = null;
@@ -97,6 +99,10 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
             addressRequest.setLatitude(22.597693666787432);
             addressRequest.setLongitude(88.35945631449115);
             appUserService.addAddress(addressRequest);
+
+            AddVehicleResponse addVehicleResponse = vehicleService.addFourWheeler(new AddVehicleRequest("Honda", "Civic", 1700));
+            vehicleId = addVehicleResponse.getVehicleId();
+
             SecurityContextHolder.clearContext();
         }
 
@@ -134,7 +140,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
                     new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            startedBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "Started Booking Vehicle");
+            startedBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
             assertNotNull(startedBookingId); // Check startedBookingId is created
             SecurityContextHolder.clearContext();
         }
@@ -146,7 +152,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
                         new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                bookedBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "Booked Booking Vehicle");
+                bookedBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
                 assertNotNull(bookedBookingId); // Check bookedBookingId is created
                 SecurityContextHolder.clearContext();
             }
@@ -168,7 +174,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
                         new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                onTheWayBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "Booked ON_THE_WAY Vehicle");
+                onTheWayBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
                 assertNotNull(onTheWayBookingId); // Check onTheWayBookingId is created
                 SecurityContextHolder.clearContext();
             }
@@ -199,7 +205,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
                         new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                waitingBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "Booked WAITING Vehicle");
+                waitingBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
                 assertNotNull(waitingBookingId); // Check waitingBookingId is created
                 SecurityContextHolder.clearContext();
             }
@@ -258,7 +264,7 @@ public class BookingServiceCancellationScenariosForWorkShopUserTest {
                         new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                repairingBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, "Booked REPAIRING Vehicle");
+                repairingBookingId = bookingService.requestBooking(workshopUser.getId(), 1000, vehicleId);
                 assertNotNull(repairingBookingId); // Check repairingBookingId is created
                 SecurityContextHolder.clearContext();
             }

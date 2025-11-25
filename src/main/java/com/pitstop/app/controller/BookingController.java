@@ -2,15 +2,12 @@ package com.pitstop.app.controller;
 
 import com.pitstop.app.constants.BookingStatus;
 import com.pitstop.app.dto.*;
-import com.pitstop.app.model.Booking;
-import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.BookingServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -32,7 +29,7 @@ public class BookingController {
         String bookingId = null;
         try {
             bookingId = bookingService.requestBooking(requestBooking.getWorkShopUserId(),
-                    requestBooking.getAmount(), requestBooking.getVehicleDetails());
+                    requestBooking.getAmount(), requestBooking.getVehicleId());
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -51,7 +48,7 @@ public class BookingController {
 
     // Role should be WORKSHOP_USER
     @GetMapping("/check")
-    public ResponseEntity<List<BookingResponse>> checkForStartedBookingsForWorkshopUser() {
+    public ResponseEntity<List<BookingResponse>> checkQueueOfBookingsForWorkshopUser() {
         return new ResponseEntity<>(bookingService.getStartedBookings(), HttpStatus.OK);
     }
 
