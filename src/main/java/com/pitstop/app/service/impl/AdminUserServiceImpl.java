@@ -3,12 +3,10 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.dto.AdminUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.exception.ResourceNotFoundException;
-import com.pitstop.app.model.AdminUser;
-import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.BaseUser;
-import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.model.*;
 import com.pitstop.app.repository.AdminUserRepository;
 import com.pitstop.app.repository.AppUserRepository;
+import com.pitstop.app.repository.BookingRepository;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.AdminUserService;
 import com.pitstop.app.utils.JwtUtil;
@@ -34,6 +32,8 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final AuthenticationManager manager;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtil jwtUtil;
+    private final BookingServiceImpl bookingService;
+    private final BookingRepository bookingRepository;
 
     @Transactional
     public String changeUserRole(String username, String newRole) {
@@ -45,6 +45,34 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         return updateUserRole(user, newRole);
     }
+
+    @Override
+    public List<Booking> getBookingHistoryAppUser(String appUserId) {
+        try {
+            return bookingRepository.findByAppUserIdOrderByBookingStartedTimeDesc(appUserId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<Booking> getBookingHistoryWorkShopUser(String workshopUserId) {
+        try {
+            return bookingRepository.findByWorkshopUserIdOrderByBookingStartedTimeDesc(workshopUserId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Booking getBookingDetailsById(String bookingId) {
+        try {
+            return bookingService.getBookingById(bookingId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private String updateUserRole(BaseUser user, String newRole) {
         user.setRoles(List.of(newRole.toUpperCase()));
 
