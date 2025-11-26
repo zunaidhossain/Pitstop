@@ -1,9 +1,15 @@
 package com.pitstop.app.service;
 
 import com.pitstop.app.model.BaseUser;
+import com.pitstop.app.model.Booking;
+import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AdminUserService {
     String changeUserRole(String id,String role);
+    List<Booking> getBookingHistoryAppUser(String appUserId);
+    List<Booking> getBookingHistoryWorkShopUser(String workshopUserId);
+    Booking getBookingDetailsById(String bookingId);
 }
