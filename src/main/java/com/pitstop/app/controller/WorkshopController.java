@@ -68,4 +68,58 @@ public class WorkshopController {
     public ResponseEntity<PersonalInfoResponse> getPersonalInfo() {
         return new ResponseEntity<>(workshopService.getPersonalProfile(),HttpStatus.OK);
     }
+    @PutMapping("/addWorkshopService")
+    public ResponseEntity<?> addWorkshopService(@RequestBody WorkshopServiceTypeRequest workshopServiceType) {
+         try{
+             workshopService.addWorkshopServiceType(workshopServiceType);
+             return ResponseEntity.ok("WORKSHOP SERVICE TYPE ADDED SUCCESSFULLY");
+         } catch (Exception e) {
+             return new ResponseEntity<>("FAILED TO ADD WORKSHOP SERVICE", HttpStatus.INTERNAL_SERVER_ERROR);
+         }
+    }
+    @PutMapping("/addWorkshopVehicleType")
+    public ResponseEntity<?> addWorkShopVehicleType(@RequestBody WorkShopVehicleTypeRequest workshopVehicleTypeRequest) {
+        try{
+            workshopService.addWorkshopVehicleType(workshopVehicleTypeRequest);
+            return ResponseEntity.ok("WORKSHOP VEHICLE TYPE ADDED SUCCESSFULLY");
+        } catch (Exception e) {
+            return new ResponseEntity<>("FAILED TO ADD WORKSHOP SERVICE", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @DeleteMapping("/removeWorkshopService")
+    public ResponseEntity<?> removeWorkshopService(@RequestBody WorkshopServiceTypeRequest workshopServiceType) {
+        try{
+            workshopService.deleteWorkshopServiceType(workshopServiceType);
+            return ResponseEntity.ok("WORKSHOP SERVICE TYPE REMOVED SUCCESSFULLY");
+        }
+        catch (Exception e) {
+            throw new RuntimeException("FAILED TO REMOVE WORKSHOP SERVICE" +HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @DeleteMapping("/removeVehicle")
+    public ResponseEntity<?> removeWorkshopVehicleType(@RequestBody WorkShopVehicleTypeRequest workshopVehicleTypeRequest) {
+        try{
+            workshopService.deleteWorkshopVehicleType(workshopVehicleTypeRequest);
+            return ResponseEntity.ok("WORKSHOP VEHICLE TYPE REMOVED SUCCESSFULLY");
+        }
+        catch (Exception e) {
+            throw new RuntimeException("FAILED TO REMOVE WORKSHOP VEHICLE TYPE" +HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/me/services")
+    public ResponseEntity<?> getWorkshopServices(){
+         try{
+            return new ResponseEntity<>(workshopService.getAllWorkshopServiceType(),HttpStatus.OK);
+         } catch (Exception e) {
+             throw new RuntimeException("FAILED TO GET WORKSHOP SERVICE TYPES" +HttpStatus.INTERNAL_SERVER_ERROR);
+         }
+    }
+    @GetMapping("/me/vehicleTypes")
+    public ResponseEntity<?> getWorkshopSupportedVehicleTypes(){
+        try{
+            return new ResponseEntity<>(workshopService.getWorkshopSupportedVehicleType(),HttpStatus.OK);
+        } catch (Exception e) {
+            throw new RuntimeException("FAILED TO GET WORKSHOP SERVICE TYPES" +HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
