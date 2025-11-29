@@ -1,6 +1,8 @@
 package com.pitstop.app.model;
 
+import com.pitstop.app.constants.WorkshopServiceType;
 import com.pitstop.app.constants.WorkshopStatus;
+import com.pitstop.app.constants.WorkshopVehicleType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +32,8 @@ public class WorkshopUser implements BaseUser{
     private double currentWalletBalance = 0.0;
     private double rating = 5.0;
     private List<Integer> ratingsList = new ArrayList<>();
+    private List<WorkshopServiceType> servicesOffered = new ArrayList<>();
+    private WorkshopVehicleType vehicleTypeSupported;
 
     @DBRef
     private List<Booking> bookingHistory = new ArrayList<>();
