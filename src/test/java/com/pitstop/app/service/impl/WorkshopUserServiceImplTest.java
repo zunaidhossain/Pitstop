@@ -1,8 +1,8 @@
 package com.pitstop.app.service.impl;
 
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.AppUserLoginRequest;
-import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.constants.WorkshopServiceType;
+import com.pitstop.app.constants.WorkshopVehicleType;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,6 +119,120 @@ public class WorkshopUserServiceImplTest {
                 .orElseThrow(() -> new AssertionError("WorkshopUser not found after address update"));
 
         assertNotNull(updated.getWorkshopAddress());
+    }
+    @Order(6)
+    @DisplayName("Should add workshop service type")
+    @Test
+    void addServiceType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkshopServiceTypeRequest serviceType = new WorkshopServiceTypeRequest();
+        serviceType.setWorkshopServiceType("OIL_CHANGE");
+        workshopUserService.addWorkshopServiceType(serviceType);
+        WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
+        assertTrue(updated.getServicesOffered().contains(WorkshopServiceType.OIL_CHANGE));
+    }
+    @Order(7)
+    @DisplayName("Should not add duplicate service type")
+    @Test
+    void shouldNotAddDuplicateServiceType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkshopServiceTypeRequest serviceType = new WorkshopServiceTypeRequest();
+        serviceType.setWorkshopServiceType("OIL_CHANGE");
+        assertThrows(RuntimeException.class, () -> workshopUserService.addWorkshopServiceType(serviceType));
+    }
+    @Order(8)
+    @DisplayName("Should delete workshop service type")
+    @Test
+    void shouldDeleteServiceType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkshopServiceTypeRequest serviceType = new WorkshopServiceTypeRequest();
+        serviceType.setWorkshopServiceType("OIL_CHANGE");
+        workshopUserService.deleteWorkshopServiceType(serviceType);
+        WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
+        assertFalse(updated.getServicesOffered().contains(WorkshopServiceType.OIL_CHANGE));
+    }
+    @Order(9)
+    @DisplayName("Should add workshop vehicle type")
+    @Test
+    void shouldAddWorkshopVehicleType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkShopVehicleTypeRequest wsVehicleTypeRequest = new WorkShopVehicleTypeRequest();
+        wsVehicleTypeRequest.setWorkshopVehicleType("TWO_WHEELER");
+        workshopUserService.addWorkshopVehicleType(wsVehicleTypeRequest);
+        WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
+        assertEquals(WorkshopVehicleType.TWO_WHEELER,updated.getVehicleTypeSupported());
+    }
+    @Order(10)
+    @DisplayName("Should not add workshop duplicate vehicle type")
+    @Test
+    void shouldNotAddDuplicateVehicleType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkShopVehicleTypeRequest wsVehicleTypeRequest = new WorkShopVehicleTypeRequest();
+        wsVehicleTypeRequest.setWorkshopVehicleType("TWO_WHEELER");
+        assertThrows(RuntimeException.class, () -> workshopUserService.addWorkshopVehicleType(wsVehicleTypeRequest));
+    }
+    @Order(11)
+    @DisplayName("Should delete workshop vehicle type")
+    @Test
+    void shouldDeleteWorkshopVehicleType() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkShopVehicleTypeRequest wsVehicleTypeRequest = new WorkShopVehicleTypeRequest();
+        wsVehicleTypeRequest.setWorkshopVehicleType("TWO_WHEELER");
+        workshopUserService.deleteWorkshopVehicleType(wsVehicleTypeRequest);
+        WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
+        assertNull(updated.getVehicleTypeSupported());
+    }
+    @Order(12)
+    @DisplayName("Should get all workshop service types")
+    @Test
+    void shouldGetAllWorkshopServiceTypes() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkshopServiceTypeRequest r1 = new WorkshopServiceTypeRequest();
+        r1.setWorkshopServiceType("OIL_CHANGE");
+        WorkshopServiceTypeRequest r2 = new WorkshopServiceTypeRequest();
+        r2.setWorkshopServiceType("TYRE_REPLACEMENT");
+        workshopUserService.addWorkshopServiceType(r1);
+        workshopUserService.addWorkshopServiceType(r2);
+        List<WorkshopServiceType> serviceTypes = workshopUserService.getAllWorkshopServiceType();
+        assertEquals(2, serviceTypes.size());
+        assertTrue(serviceTypes.contains(WorkshopServiceType.OIL_CHANGE));
+        assertTrue(serviceTypes.contains(WorkshopServiceType.TYRE_REPLACEMENT));
+    }
+    @Order(13)
+    @DisplayName("Should get all workshop supported vehicle types")
+    @Test
+    void shouldGetAllWorkshopSupportedVehicleTypes() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(workshopUser.getUsername(), workshopUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        WorkShopVehicleTypeRequest workShopVehicleTypeRequest = new WorkShopVehicleTypeRequest();
+        workShopVehicleTypeRequest.setWorkshopVehicleType("FOUR_WHEELER");
+        workshopUserService.addWorkshopVehicleType(workShopVehicleTypeRequest);
+        WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
+        WorkshopVehicleType vehicleType = updated.getVehicleTypeSupported();
+        assertEquals(WorkshopVehicleType.FOUR_WHEELER,vehicleType);
     }
 
     @AfterAll
