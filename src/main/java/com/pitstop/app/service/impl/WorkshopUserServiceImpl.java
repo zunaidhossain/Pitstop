@@ -7,6 +7,8 @@ import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
+import com.pitstop.app.model.CustomUserDetails;
+import com.pitstop.app.model.UserType;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.WorkshopService;
@@ -148,22 +150,36 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         return new WorkshopStatusResponse(workshopUser.getId(), workshopUser.getName(),
                 workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus(), workshopUser.getWorkshopAddress());
     }
-    public ResponseEntity<?> loginWorkshopUser(WorkshopLoginRequest workshopUser){
+    public WorkshopLoginResponse loginWorkshopUser(WorkshopLoginRequest req){
+        log.info("Login attempt for WorkshopUser: {}", req.getUsername());
+
         try {
             manager.authenticate(
-                    new UsernamePasswordAuthenticationToken(workshopUser.getUsername(),workshopUser.getPassword())
+                    new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
             );
-            UserDetails userDetails = userDetailsService.loadUserByUsername(workshopUser.getUsername());
-            String token = jwtUtil.generateToken(userDetails.getUsername());
-            AppUserLoginResponse response = new AppUserLoginResponse(
-                    userDetails.getUsername(),
-                    token,
-                    "Login successful"
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>("Incorrect username or password",HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            log.warn("Invalid WorkshopUser credentials for {}", req.getUsername());
+            throw new RuntimeException("Incorrect username or password");
         }
+
+        CustomUserDetails user =
+                (CustomUserDetails) userDetailsService.loadUserByUsername(req.getUsername());
+
+        if (user.getUserType() != UserType.WORKSHOP_USER) {
+            log.warn("User {} attempted Workshop login but is {}",
+                    req.getUsername(), user.getUserType());
+            throw new RuntimeException("Only Workshop Users can login here");
+        }
+
+        String token = jwtUtil.generateToken(user);
+
+        log.info("WorkshopUser {} logged in successfully", req.getUsername());
+
+        return new WorkshopLoginResponse(
+                user.getUsername(),
+                token,
+                "Login successful"
+        );
     }
     private AddressResponse findAddressFromCoordinates(double latitude, double longitude) {
         try {

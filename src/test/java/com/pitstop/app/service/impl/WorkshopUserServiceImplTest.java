@@ -80,10 +80,11 @@ public class WorkshopUserServiceImplTest {
         loginRequest.setUsername("xxxx_xxxx_workshop_user");
         loginRequest.setPassword("123456789");
 
-        var response = workshopUserService.loginWorkshopUser(loginRequest);
-        assertEquals(200, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Login successful"));
+        WorkshopLoginResponse response = workshopUserService.loginWorkshopUser(loginRequest);
+        assertNotNull(response);
+        assertEquals("xxxx_xxxx_workshop_user", response.getUsername());
+        assertNotNull(response.getToken());
+        assertTrue(response.getMessage().contains("Login successful"));
     }
 
     @Order(4)
@@ -94,10 +95,10 @@ public class WorkshopUserServiceImplTest {
         loginRequest.setUsername("xxxx_xxxx_workshop_user");
         loginRequest.setPassword("wrong");
 
-        var response = workshopUserService.loginWorkshopUser(loginRequest);
-        assertEquals(400, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Incorrect username or password"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> workshopUserService.loginWorkshopUser(loginRequest));
+
+        assertEquals("Incorrect username or password", ex.getMessage());
     }
 
     @Order(5)

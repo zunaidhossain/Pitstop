@@ -90,10 +90,12 @@ public class AppUserServiceImplTest {
         appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
         appUserLoginRequest.setPassword("123456789");
 
-        var response = appUserService.loginAppUser(appUserLoginRequest);
-        assertEquals(200,response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Login successful"));
+        AppUserLoginResponse response = appUserService.loginAppUser(appUserLoginRequest);
+
+        assertNotNull(response);
+        assertEquals("xxxx_xxxx_app_user",response.getUsername());
+        assertNotNull(response.getToken());
+        assertTrue(response.getMessage().contains("Login successful"));
     }
     @Order(4)
     @DisplayName("User Should Not login with wrong credentials")
@@ -103,10 +105,10 @@ public class AppUserServiceImplTest {
         appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
         appUserLoginRequest.setPassword("wrong");
 
-        var response = appUserService.loginAppUser(appUserLoginRequest);
-        assertEquals(400,response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Incorrect username or password"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> appUserService.loginAppUser(appUserLoginRequest));
+
+        assertEquals("Incorrect username or password", ex.getMessage());
     }
     @Order(5)
     @DisplayName("Adding address in user address List")

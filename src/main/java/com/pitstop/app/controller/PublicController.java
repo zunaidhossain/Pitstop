@@ -51,11 +51,11 @@ public class PublicController {
      */
     @PostMapping("/login/app-user")
     public ResponseEntity<?> loginAppUser(@RequestBody AppUserLoginRequest appUser){
-        return appUserService.loginAppUser(appUser);
+        return ResponseEntity.ok(appUserService.loginAppUser(appUser));
     }
     @PostMapping("/login/workshop")
     public ResponseEntity<?> loginWorkshopUser(@RequestBody WorkshopLoginRequest workshopUser){
-        return workshopService.loginWorkshopUser(workshopUser);
+        return ResponseEntity.ok(workshopService.loginWorkshopUser(workshopUser));
     }
     @PostMapping("/registerAdminUser")
     public ResponseEntity<String> createNewAppUser(@RequestBody AdminUser adminUser, @RequestParam String key) {
@@ -67,6 +67,6 @@ public class PublicController {
     }
     @PostMapping("/login/admin-user")
     public ResponseEntity<?> loginAdminUser(@RequestBody AdminUserLoginRequest adminUserLoginRequest){
-        return adminUserService.loginAdminUser(adminUserLoginRequest);
+        return ResponseEntity.ok(adminUserService.loginAdminUser(adminUserLoginRequest));
     }
 }
