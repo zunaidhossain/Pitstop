@@ -1,7 +1,7 @@
 package com.pitstop.app.repository;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.model.WorkshopUser;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -24,5 +24,5 @@ public interface WorkshopUserRepository extends MongoRepository<WorkshopUser, St
     //Find all workshops that offer a particular service
     List<WorkshopUser> findByServicesOffered(WorkshopServiceType workshopServiceType);
     //Find all workshops that support a particular vehicle type
-    List<WorkshopUser> findByVehicleTypeSupported(WorkshopVehicleType workshopVehicleType);
+    List<WorkshopUser> findByVehicleTypeSupported(VehicleType workshopVehicleType);
 }

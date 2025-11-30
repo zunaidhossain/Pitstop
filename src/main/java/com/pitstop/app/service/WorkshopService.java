@@ -1,7 +1,7 @@
 package com.pitstop.app.service;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.model.WorkshopUser;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface WorkshopService {
-    void saveWorkshopUserDetails(WorkshopUser workshopUser);
+    WorkshopUserRegisterResponse saveWorkshopUserDetails(WorkshopUserRegisterRequest workshopUser);
     WorkshopUser getWorkshopUserById(String id);
     List<WorkshopUser> getAllWorkshopUser();
 
@@ -30,5 +30,5 @@ public interface WorkshopService {
     void deleteWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceTypeRequest);
     void deleteWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleTypeRequest);
     List<WorkshopServiceType> getAllWorkshopServiceType();
-    WorkshopVehicleType getWorkshopSupportedVehicleType();
+    VehicleType getWorkshopSupportedVehicleType();
 }

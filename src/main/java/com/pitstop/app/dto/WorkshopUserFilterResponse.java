@@ -1,7 +1,7 @@
 package com.pitstop.app.dto;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +11,7 @@ public class WorkshopUserFilterResponse {
     private String workshopId;
     private String workshopName;
     private double distanceKm;
-    private WorkshopVehicleType vehicleType;
+    private VehicleType vehicleType;
     private WorkshopServiceType serviceType;
     private String formattedAddress;
     private Double latitude;

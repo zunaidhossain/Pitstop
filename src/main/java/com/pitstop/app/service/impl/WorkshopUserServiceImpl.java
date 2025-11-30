@@ -1,8 +1,8 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
 import com.pitstop.app.constants.WorkshopStatus;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
@@ -32,6 +32,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,15 +62,29 @@ public class WorkshopUserServiceImpl implements WorkshopService {
     private String nominatimUserAgent;
 
     @Override
-    public void saveWorkshopUserDetails(WorkshopUser workshopUser) {
-        boolean existsByUsername = workshopUserRepository.findByUsername(workshopUser.getUsername()).isPresent();
-        boolean existsByEmail = workshopUserRepository.findByEmail(workshopUser.getEmail()).isPresent();
+    public WorkshopUserRegisterResponse saveWorkshopUserDetails(WorkshopUserRegisterRequest workshopUserRequest) {
+        boolean existsByUsername = workshopUserRepository.findByUsername(workshopUserRequest.getUsername()).isPresent();
+        boolean existsByEmail = workshopUserRepository.findByEmail(workshopUserRequest.getEmail()).isPresent();
 
         if(existsByEmail || existsByUsername){
             throw new UserAlreadyExistException("WorkshopUser already exists");
         }
-        workshopUser.setPassword(passwordEncoder.encode(workshopUser.getPassword()));
-        workshopUserRepository.save(workshopUser);
+        WorkshopUser workshop = new WorkshopUser();
+        workshop.setName(workshopUserRequest.getName());
+        workshop.setEmail(workshopUserRequest.getEmail());
+        workshop.setUsername(workshopUserRequest.getUsername());
+        workshop.setPassword(passwordEncoder.encode(workshopUserRequest.getPassword()));
+        workshop.setAccountCreationDateTime(LocalDateTime.now());
+        workshopUserRepository.save(workshop);
+        log.info("WorkshopUser {} successfully saved : ", workshopUserRequest.getUsername());
+
+        WorkshopUserRegisterResponse response = new WorkshopUserRegisterResponse();
+        response.setId(workshop.getId());
+        response.setName(workshopUserRequest.getName());
+        response.setUsername(workshopUserRequest.getUsername());
+        response.setEmail(workshopUserRequest.getEmail());
+        response.setMessage("Workshop user created successfully");
+        return response;
     }
     public void updateWorkshopUserDetails(WorkshopUser workshopUser){
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
@@ -337,7 +352,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
             WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            WorkshopVehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleType);
+            VehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleType);
 
             if (currentWorkShopUser.getVehicleTypeSupported() != null && currentWorkShopUser.getVehicleTypeSupported().equals(vehicleType)) {
                 log.warn("Vehicle type {} already exists for workshop {}", vehicleType, username);
@@ -364,9 +379,9 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         }
     }
 
-    private WorkshopVehicleType parseWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleType) {
+    private VehicleType parseWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleType) {
         try{
-            return WorkshopVehicleType.valueOf(workshopVehicleType.getWorkshopVehicleType().toUpperCase());
+            return VehicleType.valueOf(workshopVehicleType.getWorkshopVehicleType().toUpperCase());
         }
         catch (Exception e) {
             log.error("Invalid vehicle type received : {}", e.getMessage());
@@ -416,7 +431,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
             WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            WorkshopVehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleTypeRequest);
+            VehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleTypeRequest);
            if(currentWorkShopUser.getVehicleTypeSupported() == null){
                log.warn("Workshop {} has no supported vehicle type added yet",username);
                throw new RuntimeException("No vehicle type supported by workshop");
@@ -458,7 +473,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
     }
 
     @Override
-    public WorkshopVehicleType getWorkshopSupportedVehicleType() {
+    public VehicleType getWorkshopSupportedVehicleType() {
         try{
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
@@ -466,7 +481,7 @@ public class WorkshopUserServiceImpl implements WorkshopService {
             WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            WorkshopVehicleType workshopVehicleType = currentWorkShopUser.getVehicleTypeSupported();
+            VehicleType workshopVehicleType = currentWorkShopUser.getVehicleTypeSupported();
             if(workshopVehicleType == null){
                 log.info("Workshop {} has no supported vehicle type added yet returning null",username);
                 return null;

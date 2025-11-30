@@ -1,7 +1,7 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.model.WorkshopUser;
@@ -30,13 +30,13 @@ public class WorkshopUserServiceImplTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private WorkshopUser workshopUser;
+    private WorkshopUserRegisterRequest workshopUser;
 
     @BeforeAll
     void setUpOnce() {
         workshopUserRepository.deleteByUsername("xxxx_xxxx_workshop_user");
 
-        workshopUser = new WorkshopUser();
+        workshopUser = new WorkshopUserRegisterRequest();
         workshopUser.setName("Workshop Test Sample Name");
         workshopUser.setUsername("xxxx_xxxx_workshop_user");
         workshopUser.setEmail("xxxx_xxxx_workshop_user@xyz.com");
@@ -62,7 +62,7 @@ public class WorkshopUserServiceImplTest {
     @Test
     @DisplayName("Should not register workshop user with duplicate username or email")
     void shouldNotRegisterDuplicateWorkshopUser() {
-        WorkshopUser duplicate = new WorkshopUser();
+        WorkshopUserRegisterRequest duplicate = new WorkshopUserRegisterRequest();
         duplicate.setName("Duplicate Workshop");
         duplicate.setUsername("xxxx_xxxx_workshop_user");
         duplicate.setEmail("xxxx_xxxx_workshop_user@xyz.com");
@@ -172,7 +172,7 @@ public class WorkshopUserServiceImplTest {
         wsVehicleTypeRequest.setWorkshopVehicleType("TWO_WHEELER");
         workshopUserService.addWorkshopVehicleType(wsVehicleTypeRequest);
         WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
-        assertEquals(WorkshopVehicleType.TWO_WHEELER,updated.getVehicleTypeSupported());
+        assertEquals(VehicleType.TWO_WHEELER,updated.getVehicleTypeSupported());
     }
     @Order(10)
     @DisplayName("Should not add workshop duplicate vehicle type")
@@ -231,8 +231,8 @@ public class WorkshopUserServiceImplTest {
         workShopVehicleTypeRequest.setWorkshopVehicleType("FOUR_WHEELER");
         workshopUserService.addWorkshopVehicleType(workShopVehicleTypeRequest);
         WorkshopUser updated = workshopUserRepository.findByUsername(workshopUser.getUsername()).orElseThrow();
-        WorkshopVehicleType vehicleType = updated.getVehicleTypeSupported();
-        assertEquals(WorkshopVehicleType.FOUR_WHEELER,vehicleType);
+        VehicleType vehicleType = updated.getVehicleTypeSupported();
+        assertEquals(VehicleType.FOUR_WHEELER,vehicleType);
     }
 
     @AfterAll

@@ -60,16 +60,29 @@ public class AppUserServiceImpl implements AppUserService {
     private String nominatimUserAgent;
 
     @Override
-    public void saveAppUserDetails(AppUser appUser) {
+    public AppUserRegisterResponse saveAppUserDetails(AppUserRegisterRequest appUserRequest) {
         //register new AppUsers
-        boolean emailExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
-        boolean usernameExists = appUserRepository.findByUsername(appUser.getUsername()).isPresent();
+        boolean emailExists = appUserRepository.findByEmail(appUserRequest.getEmail()).isPresent();
+        boolean usernameExists = appUserRepository.findByUsername(appUserRequest.getUsername()).isPresent();
 
         if(emailExists || usernameExists){
             throw new UserAlreadyExistException("AppUser already exists");
         }
-        appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
+        AppUser appUser = new AppUser();
+        appUser.setName(appUserRequest.getName());
+        appUser.setUsername(appUserRequest.getUsername());
+        appUser.setEmail(appUserRequest.getEmail());
+        appUser.setPassword(passwordEncoder.encode(appUserRequest.getPassword()));
+        appUser.setAccountCreationDateTime(LocalDateTime.now());
         appUserRepository.save(appUser);
+
+        AppUserRegisterResponse response = new AppUserRegisterResponse();
+        response.setId(appUser.getId());
+        response.setName(appUserRequest.getName());
+        response.setUsername(appUserRequest.getUsername());
+        response.setEmail(appUserRequest.getEmail());
+        response.setMessage("AppUser account created successfully");
+        return response;
     }
     public void updateAppUserDetails(AppUser appUser){
         if(appUser.getId() != null && appUserRepository.existsById(appUser.getId())){

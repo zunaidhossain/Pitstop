@@ -1,7 +1,7 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.dto.WorkshopUserFilterRequest;
 import com.pitstop.app.dto.WorkshopUserFilterResponse;
 import com.pitstop.app.model.Address;
@@ -61,7 +61,7 @@ class WorkshopSearchServiceImplTest {
         w1.setUsername("workshop1");
         w1.setPassword("pass");
         w1.setEmail("w1@test.com");
-        w1.setVehicleTypeSupported(WorkshopVehicleType.TWO_WHEELER);
+        w1.setVehicleTypeSupported(VehicleType.TWO_WHEELER);
         w1.setServicesOffered(new ArrayList<>(List.of(WorkshopServiceType.OIL_CHANGE)));
         w1.setWorkshopAddress(new Address(22.6020, 88.4020, "Near Kolkata", true)); // 0.3 km away
         workshopUserRepository.save(w1);
@@ -71,7 +71,7 @@ class WorkshopSearchServiceImplTest {
         w2.setUsername("workshop2");
         w2.setPassword("pass");
         w2.setEmail("w2@test.com");
-        w2.setVehicleTypeSupported(WorkshopVehicleType.TWO_WHEELER);
+        w2.setVehicleTypeSupported(VehicleType.TWO_WHEELER);
         w2.setServicesOffered(new ArrayList<>(List.of(WorkshopServiceType.TYRE_REPLACEMENT)));
         w2.setWorkshopAddress(new Address(22.6500, 88.4500, "Far Away", true)); // 7 km away
         workshopUserRepository.save(w2);
@@ -81,7 +81,7 @@ class WorkshopSearchServiceImplTest {
         w3.setUsername("workshop3");
         w3.setPassword("pass");
         w3.setEmail("w3@test.com");
-        w3.setVehicleTypeSupported(WorkshopVehicleType.TWO_WHEELER);
+        w3.setVehicleTypeSupported(VehicleType.TWO_WHEELER);
         w3.setServicesOffered(new ArrayList<>(List.of(WorkshopServiceType.OIL_CHANGE)));
         w3.setWorkshopAddress(new Address(22.8000, 88.3600, "Very Far", true)); // >10 km away
         workshopUserRepository.save(w3);

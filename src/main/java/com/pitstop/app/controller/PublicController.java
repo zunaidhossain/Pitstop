@@ -1,9 +1,6 @@
 package com.pitstop.app.controller;
 
-import com.pitstop.app.dto.AdminUserLoginRequest;
-import com.pitstop.app.dto.AppUserLoginRequest;
-import com.pitstop.app.dto.AppUserLoginResponse;
-import com.pitstop.app.dto.WorkshopLoginRequest;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AdminUser;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
@@ -12,6 +9,7 @@ import com.pitstop.app.service.impl.AppUserServiceImpl;
 import com.pitstop.app.service.impl.UserDetailsServiceImpl;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
 import com.pitstop.app.utils.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -37,15 +35,15 @@ public class PublicController {
     }
 
     @PostMapping("/registerWorkshop")
-    public ResponseEntity<String> createNewWorkshopUser(@RequestBody WorkshopUser workshopUser) {
-        workshopService.saveWorkshopUserDetails(workshopUser);
-        return new ResponseEntity<>("New WorkshopUser account created successfully", HttpStatus.CREATED);
+    public ResponseEntity<?> createNewWorkshopUser(@RequestBody @Valid WorkshopUserRegisterRequest workshopUser) {
+        WorkshopUserRegisterResponse response = workshopService.saveWorkshopUserDetails(workshopUser);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/registerAppUser")
-    public ResponseEntity<String> createNewAppUser(@RequestBody AppUser appUser) {
-        appUserService.saveAppUserDetails(appUser);
-        return new ResponseEntity<>("New AppUser account created successfully", HttpStatus.CREATED);
+    public ResponseEntity<?> createNewAppUser(@RequestBody @Valid AppUserRegisterRequest appUser) {
+        AppUserRegisterResponse response = appUserService.saveAppUserDetails(appUser);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /*

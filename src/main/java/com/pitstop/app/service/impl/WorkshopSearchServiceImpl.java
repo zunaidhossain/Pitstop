@@ -1,10 +1,9 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
-import com.pitstop.app.constants.WorkshopVehicleType;
 import com.pitstop.app.dto.WorkshopUserFilterRequest;
 import com.pitstop.app.dto.WorkshopUserFilterResponse;
-import com.pitstop.app.dto.WorkshopUserResponse;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
 import com.pitstop.app.model.AppUser;
@@ -41,7 +40,7 @@ public class WorkshopSearchServiceImpl implements WorkshopSearchService {
 
             Address defaultAddress = getAppUserDefaultAddress(currentAppUser);
             log.info("Using user default address: {}", defaultAddress.getFormattedAddress());
-            WorkshopVehicleType requestedVehicleType = parseWorkshopVehicleType(workshopUserRequest.getVehicleType());
+            VehicleType requestedVehicleType = parseWorkshopVehicleType(workshopUserRequest.getVehicleType());
             WorkshopServiceType requestedServiceType = parseWorkshopServiceType(workshopUserRequest.getServiceType());
             log.info("Filtering workshops for vehicleType={} and serviceType={}",
                     requestedVehicleType, requestedServiceType);
@@ -92,9 +91,9 @@ public class WorkshopSearchServiceImpl implements WorkshopSearchService {
             throw new RuntimeException("Failed to search workshops.");
         }
     }
-    private WorkshopVehicleType parseWorkshopVehicleType(String workshopVehicleType) {
+    private VehicleType parseWorkshopVehicleType(String workshopVehicleType) {
         try{
-            return WorkshopVehicleType.valueOf(workshopVehicleType.toUpperCase());
+            return VehicleType.valueOf(workshopVehicleType.toUpperCase());
         }
         catch(Exception e){
             log.error("Invalid vehicle type: {}", workshopVehicleType, e);
