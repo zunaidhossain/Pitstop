@@ -1,5 +1,7 @@
 package com.pitstop.app.model;
 
+import com.pitstop.app.constants.VehicleType;
+import com.pitstop.app.constants.WorkshopServiceType;
 import com.pitstop.app.constants.WorkshopStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +17,6 @@ import java.util.List;
 @Getter
 @Setter
 @Document(collection = "workshops")
-@NoArgsConstructor
 public class WorkshopUser implements BaseUser{
 
     @Id
@@ -24,12 +25,19 @@ public class WorkshopUser implements BaseUser{
     private String username;
     private String email;
     private String password;
-    private Address workshopAddress;
-    private List<String> roles = List.of("WORKSHOP");
+    private Address workshopAddress = new Address();
+    private UserType userType = UserType.WORKSHOP_USER;
+    private List<String> roles = new ArrayList<>();
+
+    public WorkshopUser(){
+        this.roles.add("WORKSHOP");
+    }
 
     private double currentWalletBalance = 0.0;
     private double rating = 5.0;
     private List<Integer> ratingsList = new ArrayList<>();
+    private List<WorkshopServiceType> servicesOffered = new ArrayList<>();
+    private VehicleType vehicleTypeSupported;
 
     @DBRef
     private List<Booking> bookingHistory = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.pitstop.app.service.impl;
 import com.pitstop.app.dto.AddressRequest;
 import com.pitstop.app.dto.AppUserLoginRequest;
 import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.dto.AppUserRegisterRequest;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.model.Address;
@@ -44,12 +45,12 @@ public class AppUserServiceImplTest {
     private AppUserServiceImpl appUserService;
     @Autowired
     private PasswordEncoder passwordEncoder;
-    private AppUser appUser;
+    private AppUserRegisterRequest appUser;
 
     @BeforeAll
     public void setUpOnce() {
         appUserRepository.deleteByUsername("xxxx_xxxx_app_user");
-        appUser = new AppUser();
+        appUser = new AppUserRegisterRequest();
         appUser.setName("AppUser Test Sample Name");
         appUser.setUsername("xxxx_xxxx_app_user");
         appUser.setEmail("xxxx_xxxx_app_user@xyz.com");
@@ -71,7 +72,7 @@ public class AppUserServiceImplTest {
     @Test
     @DisplayName("Should not register user with duplicate username or password")
     void shouldNotRegisterNewUserWithSameCredentials() {
-        AppUser duplicateAppUser = new AppUser();
+        AppUserRegisterRequest duplicateAppUser = new AppUserRegisterRequest();
 
         duplicateAppUser.setName("Duplicate");
         duplicateAppUser.setUsername("xxxx_xxxx_app_user");
@@ -89,10 +90,12 @@ public class AppUserServiceImplTest {
         appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
         appUserLoginRequest.setPassword("123456789");
 
-        var response = appUserService.loginAppUser(appUserLoginRequest);
-        assertEquals(200,response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Login successful"));
+        AppUserLoginResponse response = appUserService.loginAppUser(appUserLoginRequest);
+
+        assertNotNull(response);
+        assertEquals("xxxx_xxxx_app_user",response.getUsername());
+        assertNotNull(response.getToken());
+        assertTrue(response.getMessage().contains("Login successful"));
     }
     @Order(4)
     @DisplayName("User Should Not login with wrong credentials")
@@ -102,10 +105,10 @@ public class AppUserServiceImplTest {
         appUserLoginRequest.setUsername("xxxx_xxxx_app_user");
         appUserLoginRequest.setPassword("wrong");
 
-        var response = appUserService.loginAppUser(appUserLoginRequest);
-        assertEquals(400,response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().toString().contains("Incorrect username or password"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> appUserService.loginAppUser(appUserLoginRequest));
+
+        assertEquals("Incorrect username or password", ex.getMessage());
     }
     @Order(5)
     @DisplayName("Adding address in user address List")

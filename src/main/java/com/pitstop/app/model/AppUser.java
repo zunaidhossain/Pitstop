@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@NoArgsConstructor
 @Getter
 @Setter
 @Document(collection = "users")
@@ -23,7 +22,12 @@ public class AppUser implements BaseUser{
     private String username;
     private String email;
     private String password;
-    private List<String> roles = List.of("USER");
+    private UserType userType = UserType.APP_USER;
+    private List<String> roles = new ArrayList<>();
+
+    public AppUser() {
+        this.roles.add("USER");
+    }
 
     @DBRef
     private List<Vehicle> vehicleList = new ArrayList<>();

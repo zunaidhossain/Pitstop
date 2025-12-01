@@ -1,10 +1,14 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
+import com.pitstop.app.constants.WorkshopServiceType;
 import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.Address;
+import com.pitstop.app.model.CustomUserDetails;
+import com.pitstop.app.model.UserType;
 import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.WorkshopService;
@@ -30,6 +34,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -58,15 +64,29 @@ public class WorkshopUserServiceImpl implements WorkshopService {
     private String nominatimUserAgent;
 
     @Override
-    public void saveWorkshopUserDetails(WorkshopUser workshopUser) {
-        boolean existsByUsername = workshopUserRepository.findByUsername(workshopUser.getUsername()).isPresent();
-        boolean existsByEmail = workshopUserRepository.findByEmail(workshopUser.getEmail()).isPresent();
+    public WorkshopUserRegisterResponse saveWorkshopUserDetails(WorkshopUserRegisterRequest workshopUserRequest) {
+        boolean existsByUsername = workshopUserRepository.findByUsername(workshopUserRequest.getUsername()).isPresent();
+        boolean existsByEmail = workshopUserRepository.findByEmail(workshopUserRequest.getEmail()).isPresent();
 
         if(existsByEmail || existsByUsername){
             throw new UserAlreadyExistException("WorkshopUser already exists");
         }
-        workshopUser.setPassword(passwordEncoder.encode(workshopUser.getPassword()));
-        workshopUserRepository.save(workshopUser);
+        WorkshopUser workshop = new WorkshopUser();
+        workshop.setName(workshopUserRequest.getName());
+        workshop.setEmail(workshopUserRequest.getEmail());
+        workshop.setUsername(workshopUserRequest.getUsername());
+        workshop.setPassword(passwordEncoder.encode(workshopUserRequest.getPassword()));
+        workshop.setAccountCreationDateTime(LocalDateTime.now());
+        workshopUserRepository.save(workshop);
+        log.info("WorkshopUser {} successfully saved : ", workshopUserRequest.getUsername());
+
+        WorkshopUserRegisterResponse response = new WorkshopUserRegisterResponse();
+        response.setId(workshop.getId());
+        response.setName(workshopUserRequest.getName());
+        response.setUsername(workshopUserRequest.getUsername());
+        response.setEmail(workshopUserRequest.getEmail());
+        response.setMessage("Workshop user created successfully");
+        return response;
     }
     public void updateWorkshopUserDetails(WorkshopUser workshopUser){
         if(workshopUser.getId() != null && workshopUserRepository.existsById(workshopUser.getId())){
@@ -130,22 +150,36 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         return new WorkshopStatusResponse(workshopUser.getId(), workshopUser.getName(),
                 workshopUser.getUsername(),workshopUser.getCurrentWorkshopStatus(), workshopUser.getWorkshopAddress());
     }
-    public ResponseEntity<?> loginWorkshopUser(WorkshopLoginRequest workshopUser){
+    public WorkshopLoginResponse loginWorkshopUser(WorkshopLoginRequest req){
+        log.info("Login attempt for WorkshopUser: {}", req.getUsername());
+
         try {
             manager.authenticate(
-                    new UsernamePasswordAuthenticationToken(workshopUser.getUsername(),workshopUser.getPassword())
+                    new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
             );
-            UserDetails userDetails = userDetailsService.loadUserByUsername(workshopUser.getUsername());
-            String token = jwtUtil.generateToken(userDetails.getUsername());
-            AppUserLoginResponse response = new AppUserLoginResponse(
-                    userDetails.getUsername(),
-                    token,
-                    "Login successful"
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>("Incorrect username or password",HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            log.warn("Invalid WorkshopUser credentials for {}", req.getUsername());
+            throw new RuntimeException("Incorrect username or password");
         }
+
+        CustomUserDetails user =
+                (CustomUserDetails) userDetailsService.loadUserByUsername(req.getUsername());
+
+        if (user.getUserType() != UserType.WORKSHOP_USER) {
+            log.warn("User {} attempted Workshop login but is {}",
+                    req.getUsername(), user.getUserType());
+            throw new RuntimeException("Only Workshop Users can login here");
+        }
+
+        String token = jwtUtil.generateToken(user);
+
+        log.info("WorkshopUser {} logged in successfully", req.getUsername());
+
+        return new WorkshopLoginResponse(
+                user.getUsername(),
+                token,
+                "Login successful"
+        );
     }
     private AddressResponse findAddressFromCoordinates(double latitude, double longitude) {
         try {
@@ -298,5 +332,182 @@ public class WorkshopUserServiceImpl implements WorkshopService {
         return new PersonalInfoResponse(currentWorkShopUser.getName(),
                 currentWorkShopUser.getUsername(), currentWorkShopUser.getEmail(),
                 Math.round(currentWorkShopUser.getRating() * 10.0) / 10.0);
+    }
+
+    @Override
+    public void addWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceType) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            WorkshopServiceType serviceType = parseWorkshopServiceType(workshopServiceType);
+            if(currentWorkShopUser.getServicesOffered().contains(serviceType)) {
+                log.warn("Workshop Service Type {} already exists for workshop {} ", serviceType.toString(),username);
+                throw new RuntimeException("Workshop Service Type already exists");
+            }
+            currentWorkShopUser.getServicesOffered().add(serviceType);
+            currentWorkShopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+            updateWorkshopUserDetails(currentWorkShopUser);
+            log.info("Added Workshop Service Type {}", serviceType.toString());
+        }
+        catch (Exception e) {
+            log.error("Workshop Service cannot be added : {}", e.getMessage());
+            throw new RuntimeException("Error occurred trying to save Workshop Service Details.");
+        }
+    }
+
+    @Override
+    public void addWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleType) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            VehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleType);
+
+            if (currentWorkShopUser.getVehicleTypeSupported() != null && currentWorkShopUser.getVehicleTypeSupported().equals(vehicleType)) {
+                log.warn("Vehicle type {} already exists for workshop {}", vehicleType, username);
+                throw new RuntimeException("Vehicle Type already exists");
+            }
+            currentWorkShopUser.setVehicleTypeSupported(vehicleType);
+            currentWorkShopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+            updateWorkshopUserDetails(currentWorkShopUser);
+            log.info("Added Workshop Vehicle Type {}", vehicleType.toString());
+        }
+        catch (Exception e) {
+            log.error("Workshop Vehicle Type cannot be added : {}", e.getMessage());
+            throw new RuntimeException("Error occurred trying to save Workshop Vehicle Type.");
+        }
+    }
+
+    private WorkshopServiceType parseWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceType) {
+        try {
+            return WorkshopServiceType.valueOf(workshopServiceType.getWorkshopServiceType().toUpperCase());
+        }
+        catch (Exception e) {
+            log.error("Invalid service type received : {}", e.getMessage());
+            throw new RuntimeException("Invalid service type received." + workshopServiceType);
+        }
+    }
+
+    private VehicleType parseWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleType) {
+        try{
+            return VehicleType.valueOf(workshopVehicleType.getWorkshopVehicleType().toUpperCase());
+        }
+        catch (Exception e) {
+            log.error("Invalid vehicle type received : {}", e.getMessage());
+            throw new RuntimeException("Invalid vehicle type received." + workshopVehicleType);
+        }
+    }
+
+    @Override
+    public void deleteWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceTypeRequest) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            WorkshopServiceType serviceType = parseWorkshopServiceType(workshopServiceTypeRequest);
+
+            if(currentWorkShopUser.getServicesOffered() == null || username.isEmpty()) {
+                log.warn("Workshop {} has no services added yet",username);
+                throw new RuntimeException("No services added to remove from workshop");
+            }
+            if(!currentWorkShopUser.getServicesOffered().contains(serviceType)) {
+                log.warn("Workshop {} does not currently offer service {}",username,serviceType.toString());
+                throw new RuntimeException("Workshop does not offer this service");
+            }
+            currentWorkShopUser.getServicesOffered().remove(serviceType);
+            currentWorkShopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+            updateWorkshopUserDetails(currentWorkShopUser);
+            log.info("Removed service {} from workshop {}", serviceType, username);
+
+            currentWorkShopUser.getServicesOffered().remove(serviceType);
+            updateWorkshopUserDetails(currentWorkShopUser);
+            log.info("Deleted Workshop Service Type {}", serviceType.toString());
+        } catch (Exception e) {
+            log.error("Unexpected error while deleting workshop service: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete workshop service");
+        }
+    }
+
+    @Override
+    public void deleteWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleTypeRequest) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            VehicleType vehicleType = parseWorkshopVehicleType(workshopVehicleTypeRequest);
+           if(currentWorkShopUser.getVehicleTypeSupported() == null){
+               log.warn("Workshop {} has no supported vehicle type added yet",username);
+               throw new RuntimeException("No vehicle type supported by workshop");
+           }
+           if(!currentWorkShopUser.getVehicleTypeSupported().equals(vehicleType)) {
+               log.warn("Workshop {} does not support this vehicle type",username);
+               throw new RuntimeException("Workshop does not support this vehicle type");
+           }
+           currentWorkShopUser.setVehicleTypeSupported(null);
+           currentWorkShopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+           updateWorkshopUserDetails(currentWorkShopUser);
+           log.info("Removed vehicle type {} from workshop {}", vehicleType, username);
+        } catch (Exception e) {
+            log.error("Unexpected error while deleting workshop vehicle type supported: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete workshop vehicle type supported");
+        }
+    }
+
+    @Override
+    public List<WorkshopServiceType> getAllWorkshopServiceType() {
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if(currentWorkShopUser.getServicesOffered() == null || currentWorkShopUser.getServicesOffered().isEmpty()) {
+                log.info("Workshop {} has no 'servicesOffered' list initialized. Returning empty list.", username);
+                return Collections.emptyList();
+            }
+            log.info("Successfully returned the list of services for workshop {}", username);
+            return currentWorkShopUser.getServicesOffered();
+        }
+        catch (Exception e) {
+            log.error("Unexpected error while fetching workshop services: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch workshop services");
+        }
+    }
+
+    @Override
+    public VehicleType getWorkshopSupportedVehicleType() {
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            WorkshopUser currentWorkShopUser = workshopUserRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            VehicleType workshopVehicleType = currentWorkShopUser.getVehicleTypeSupported();
+            if(workshopVehicleType == null){
+                log.info("Workshop {} has no supported vehicle type added yet returning null",username);
+                return null;
+            }
+            log.info("Workshop {} supports service for service : {} ", username, workshopVehicleType);
+            return workshopVehicleType;
+        }
+        catch (Exception e) {
+            log.error("Unexpected error while fetching workshop vehicle type: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch workshop vehicle type");
+        }
     }
 }

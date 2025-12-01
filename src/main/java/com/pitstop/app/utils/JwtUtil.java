@@ -1,28 +1,44 @@
 package com.pitstop.app.utils;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import com.pitstop.app.model.CustomUserDetails;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class JwtUtil {
-    @Value("${jwt.secretKey}")
-    private String SECRET_KEY;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private final SecretKey secretKey;
+    private final long expirationMs;
+
+    public JwtUtil(
+            @Value("${jwt.secretKey}") String secret,
+            @Value("${jwt.expiration-ms:86400000}") long expirationMs // default 1 day
+    ) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationMs = expirationMs;
     }
 
+    // --------------------- Extract Data ------------------------- //
+
     public String extractUsername(String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.getSubject();
+        return extractAllClaims(token).getSubject();
+    }
+
+    public List<String> extractRoles(String token) {
+        return extractAllClaims(token).get("roles", List.class);
+    }
+
+    public String extractUserType(String token) {
+        return extractAllClaims(token).get("userType", String.class);
     }
 
     public Date extractExpiration(String token) {
@@ -31,34 +47,47 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
 
-    private Boolean isTokenExpired(String token) {
+    private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
-    }
+    // --------------------- Token Generation ------------------------- //
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    public String generateToken(CustomUserDetails userDetails) {
+
+        Map<String, Object> claims = Map.of(
+                "roles", userDetails.getBaseUser().getRoles(),
+                "userType", userDetails.getUserType().name()
+        );
+
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + expirationMs);
+
         return Jwts.builder()
+                .header().type("JWT").and()
                 .claims(claims)
-                .subject(subject)
-                .header().empty().add("typ","JWT")
-                .and()
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 50)) // 5 minutes expiration time
-                .signWith(getSigningKey())
+                .subject(userDetails.getUsername())
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
 
-    public Boolean validateToken(String token) {
-        return !isTokenExpired(token);
+    // --------------------- Validation ------------------------- //
+
+    public boolean validateToken(String token, String username) {
+        try {
+            String extracted = extractUsername(token);
+            return extracted.equals(username) && !isTokenExpired(token);
+        } catch (Exception e) {
+            log.warn("JWT validation failed: {}", e.getMessage());
+            return false;
+        }
     }
 }

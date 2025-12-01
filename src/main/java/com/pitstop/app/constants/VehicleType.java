@@ -1,5 +1,5 @@
 package com.pitstop.app.constants;
 
 public enum VehicleType {
-    TWO_WHEELER, FOUR_WHEELER
+    TWO_WHEELER, FOUR_WHEELER, BOTH
 }

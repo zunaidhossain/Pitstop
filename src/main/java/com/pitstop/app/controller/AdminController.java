@@ -70,7 +70,7 @@ public class AdminController {
     }
     @PostMapping("/login/admin-user")
     public ResponseEntity<?> loginAdminUser(@RequestBody AdminUserLoginRequest adminUserLoginRequest){
-        return adminUserService.loginAdminUser(adminUserLoginRequest);
+        return ResponseEntity.ok(adminUserService.loginAdminUser(adminUserLoginRequest));
     }
     @GetMapping("/bookingHistory/AppUser/{appUserId}")
     public ResponseEntity<?> getBookingHistoryAppUser(@PathVariable String appUserId) {

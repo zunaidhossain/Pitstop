@@ -1,6 +1,7 @@
 package com.pitstop.app.service.impl;
 
 import com.pitstop.app.dto.AdminUserLoginRequest;
+import com.pitstop.app.dto.AdminUserLoginResponse;
 import com.pitstop.app.dto.AppUserLoginResponse;
 import com.pitstop.app.exception.ResourceNotFoundException;
 import com.pitstop.app.model.*;
@@ -11,6 +12,7 @@ import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.AdminUserService;
 import com.pitstop.app.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminUserServiceImpl implements AdminUserService {
     private final AppUserRepository appUserRepository;
     private final WorkshopUserRepository workshopUserRepository;
@@ -93,21 +96,39 @@ public class AdminUserServiceImpl implements AdminUserService {
             adminUserRepository.save(adminUser);
         }
     }
-    public ResponseEntity<?> loginAdminUser(AdminUserLoginRequest adminUserLoginRequest){
+    public AdminUserLoginResponse loginAdminUser(AdminUserLoginRequest req){
+        log.info("Login attempt for Admin: {}", req.getUsername());
+
+        // Step 1: Authenticate username/password
         try {
             manager.authenticate(
-                    new UsernamePasswordAuthenticationToken(adminUserLoginRequest.getUsername(),adminUserLoginRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
             );
-            UserDetails userDetails = userDetailsService.loadUserByUsername(adminUserLoginRequest.getUsername());
-            String token = jwtUtil.generateToken(userDetails.getUsername());
-            AppUserLoginResponse response = new AppUserLoginResponse(
-                    userDetails.getUsername(),
-                    token,
-                    "Login successful"
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>("Incorrect username or password",HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            log.warn("Invalid Admin credentials for {}", req.getUsername());
+            throw new RuntimeException("Incorrect username or password");
         }
+
+        // Step 2: Load full user details
+        CustomUserDetails user =
+                (CustomUserDetails) userDetailsService.loadUserByUsername(req.getUsername());
+
+        // Step 3: Enforce ADMIN-only login rule
+        if (user.getUserType() != UserType.ADMIN) {
+            log.warn("User {} attempted Admin login but is {}",
+                    req.getUsername(), user.getUserType());
+            throw new RuntimeException("Only Admins can login here");
+        }
+
+        // Step 4: Generate full JWT
+        String token = jwtUtil.generateToken(user);
+
+        log.info("Admin {} logged in successfully", req.getUsername());
+
+        return new AdminUserLoginResponse(
+                user.getUsername(),
+                token,
+                "Login successful"
+        );
     }
 }

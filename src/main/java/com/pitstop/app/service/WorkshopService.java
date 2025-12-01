@@ -1,16 +1,15 @@
 package com.pitstop.app.service;
 
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.PersonalInfoResponse;
-import com.pitstop.app.dto.WorkshopUserRequest;
-import com.pitstop.app.dto.WorkshopUserResponse;
+import com.pitstop.app.constants.VehicleType;
+import com.pitstop.app.constants.WorkshopServiceType;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.WorkshopUser;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface WorkshopService {
-    void saveWorkshopUserDetails(WorkshopUser workshopUser);
+    WorkshopUserRegisterResponse saveWorkshopUserDetails(WorkshopUserRegisterRequest workshopUser);
     WorkshopUser getWorkshopUserById(String id);
     List<WorkshopUser> getAllWorkshopUser();
 
@@ -25,4 +24,11 @@ public interface WorkshopService {
     ResponseEntity<?> deleteAppUser();
 
     PersonalInfoResponse getPersonalProfile();
+
+    void addWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceType);
+    void addWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleType);
+    void deleteWorkshopServiceType(WorkshopServiceTypeRequest workshopServiceTypeRequest);
+    void deleteWorkshopVehicleType(WorkShopVehicleTypeRequest workshopVehicleTypeRequest);
+    List<WorkshopServiceType> getAllWorkshopServiceType();
+    VehicleType getWorkshopSupportedVehicleType();
 }

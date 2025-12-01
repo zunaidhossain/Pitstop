@@ -1,16 +1,13 @@
 package com.pitstop.app.service;
 
-import com.pitstop.app.dto.AddressRequest;
-import com.pitstop.app.dto.AppUserRequest;
-import com.pitstop.app.dto.AppUserResponse;
-import com.pitstop.app.dto.PersonalInfoResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.model.AppUser;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface AppUserService {
-    void saveAppUserDetails(AppUser appUser);
+    AppUserRegisterResponse saveAppUserDetails(AppUserRegisterRequest appUser);
     AppUser getAppUserById(String id);
     AppUser getAppUserByUsername(String username);
     List<AppUser> getAllAppUser();
