@@ -39,8 +39,11 @@ class WorkshopSearchServiceImplTest {
 
     @BeforeAll
     void setUp() {
-        workshopUserRepository.deleteAll();
-        appUserRepository.deleteAll();
+        workshopUserRepository.deleteByUsername("workshop1");
+        workshopUserRepository.deleteByUsername("workshop2");
+        workshopUserRepository.deleteByUsername("workshop3");
+        appUserRepository.deleteByUsername("filter_test_user");
+
         Address defaultAddress = new Address(
                 22.6000,
                 88.4000,
@@ -163,7 +166,9 @@ class WorkshopSearchServiceImplTest {
 
     @AfterAll
     void tearDownAll() {
-        workshopUserRepository.deleteAll();
-        appUserRepository.deleteAll();
+       workshopUserRepository.deleteByUsername("workshop1");
+       workshopUserRepository.deleteByUsername("workshop2");
+       workshopUserRepository.deleteByUsername("workshop3");
+       appUserRepository.deleteByUsername("filter_test_user");
     }
 }
