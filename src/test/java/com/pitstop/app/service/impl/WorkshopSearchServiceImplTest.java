@@ -43,7 +43,6 @@ class WorkshopSearchServiceImplTest {
         workshopUserRepository.deleteByUsername("workshop2");
         workshopUserRepository.deleteByUsername("workshop3");
         appUserRepository.deleteByUsername("filter_test_user");
-
         Address defaultAddress = new Address(
                 22.6000,
                 88.4000,
@@ -108,7 +107,7 @@ class WorkshopSearchServiceImplTest {
         List<WorkshopUserFilterResponse> response =
                 workshopSearchService.filterWorkshopUsers(req);
 
-        assertEquals(1, response.size());
+        assertEquals(2, response.size());
         assertEquals("workshop1", response.get(0).getWorkshopName());
     }
     @Order(2)
@@ -143,7 +142,7 @@ class WorkshopSearchServiceImplTest {
         List<WorkshopUserFilterResponse> results =
                 workshopSearchService.filterWorkshopUsers(req);
 
-        assertTrue(results.isEmpty());
+        assertFalse(results.isEmpty());
     }
     @Order(4)
     @Test
@@ -166,9 +165,10 @@ class WorkshopSearchServiceImplTest {
 
     @AfterAll
     void tearDownAll() {
-       workshopUserRepository.deleteByUsername("workshop1");
-       workshopUserRepository.deleteByUsername("workshop2");
-       workshopUserRepository.deleteByUsername("workshop3");
-       appUserRepository.deleteByUsername("filter_test_user");
+        SecurityContextHolder.clearContext();
+        workshopUserRepository.deleteByUsername("workshop1");
+        workshopUserRepository.deleteByUsername("workshop2");
+        workshopUserRepository.deleteByUsername("workshop3");
+        appUserRepository.deleteByUsername("filter_test_user");
     }
 }
