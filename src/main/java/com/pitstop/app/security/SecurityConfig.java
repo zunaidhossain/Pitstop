@@ -51,8 +51,8 @@ public class SecurityConfig {
                         // Only login + register should be public
                         .requestMatchers("/api/home/login/app-user").permitAll()
                         .requestMatchers("/api/home/login/workshop").permitAll()
-                        .requestMatchers("/api/home/login/admin").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/home/register/**").permitAll()
+                        .requestMatchers("/api/home/login/admin-user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/home/**").permitAll()
 
                         // Razorpay webhook callback (no JWT)
                         .requestMatchers("/api/payments/verify").permitAll()
@@ -62,8 +62,9 @@ public class SecurityConfig {
 
                         // ----- Protected Endpoints -----
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/app-user/**").hasRole("USER")
-                        .requestMatchers("/api/workshop-user/**").hasRole("WORKSHOP")
+                        .requestMatchers("/api/users/**").hasRole("USER")
+                        .requestMatchers("/api/workshops/filterWorkshops").hasRole("USER")
+                        .requestMatchers("/api/workshops/**").hasRole("WORKSHOP")
 
                         .anyRequest().authenticated()
                 )
