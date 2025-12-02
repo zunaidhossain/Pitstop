@@ -2,6 +2,7 @@ package com.pitstop.app.service.impl;
 
 import com.pitstop.app.constants.VehicleType;
 import com.pitstop.app.constants.WorkshopServiceType;
+import com.pitstop.app.constants.WorkshopStatus;
 import com.pitstop.app.dto.WorkshopUserFilterRequest;
 import com.pitstop.app.dto.WorkshopUserFilterResponse;
 import com.pitstop.app.exception.ResourceNotFoundException;
@@ -30,8 +31,7 @@ public class WorkshopSearchServiceImpl implements WorkshopSearchService {
 
     @Override
     public List<WorkshopUserFilterResponse> filterWorkshopUsers(WorkshopUserFilterRequest workshopUserRequest) {
-        try{
-
+        try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
 
@@ -40,53 +40,84 @@ public class WorkshopSearchServiceImpl implements WorkshopSearchService {
 
             Address defaultAddress = getAppUserDefaultAddress(currentAppUser);
             log.info("Using user default address: {}", defaultAddress.getFormattedAddress());
-            VehicleType requestedVehicleType = parseWorkshopVehicleType(workshopUserRequest.getVehicleType());
-            WorkshopServiceType requestedServiceType = parseWorkshopServiceType(workshopUserRequest.getServiceType());
+
+            VehicleType requestedVehicleType =
+                    parseWorkshopVehicleType(workshopUserRequest.getVehicleType());
+            WorkshopServiceType requestedServiceType =
+                    parseWorkshopServiceType(workshopUserRequest.getServiceType());
+
             log.info("Filtering workshops for vehicleType={} and serviceType={}",
                     requestedVehicleType, requestedServiceType);
+
             List<WorkshopUser> shops = workshopUserRepository.findAll();
             log.info("Total workshops found: {}", shops.size());
+
             List<WorkshopUserFilterResponse> result = new ArrayList<>();
-            for(WorkshopUser workshopUser : shops){
-                if(workshopUser.getWorkshopAddress() == null){
-                    log.warn("Workshop {} skipped: no address set",workshopUser.getUsername());
+
+            for (WorkshopUser workshopUser : shops) {
+
+                if (workshopUser.getCurrentWorkshopStatus() != WorkshopStatus.OPEN) {
+                    log.info("Workshop {} skipped : status = {}",
+                            workshopUser.getUsername(), workshopUser.getCurrentWorkshopStatus());
                     continue;
                 }
-                if(workshopUser.getVehicleTypeSupported() != requestedVehicleType){
+
+                if (workshopUser.getWorkshopAddress() == null) {
+                    log.warn("Workshop {} skipped: no address set", workshopUser.getUsername());
                     continue;
                 }
-                if(workshopUser.getServicesOffered() == null || !workshopUser.getServicesOffered().contains(requestedServiceType)){
+
+                VehicleType supported = workshopUser.getVehicleTypeSupported();
+                boolean vehicleMatches =
+                        supported == VehicleType.BOTH ||
+                                supported == requestedVehicleType;
+
+                if (!vehicleMatches) {
+                    log.debug("Workshop {} skipped: vehicleTypeSupported={} does not match requested={}",
+                            workshopUser.getUsername(), supported, requestedVehicleType);
                     continue;
                 }
+
+                if (workshopUser.getServicesOffered() == null ||
+                        !workshopUser.getServicesOffered().contains(requestedServiceType)) {
+                    continue;
+                }
+
                 double distance = haversine(
                         defaultAddress.getLatitude(),
                         defaultAddress.getLongitude(),
                         workshopUser.getWorkshopAddress().getLatitude(),
                         workshopUser.getWorkshopAddress().getLongitude()
                 );
-                if(distance > workshopUserRequest.getMaxDistanceKm()) {
+
+                if (distance > workshopUserRequest.getMaxDistanceKm()) {
                     continue;
                 }
+
                 WorkshopUserFilterResponse response = new WorkshopUserFilterResponse();
                 response.setWorkshopId(workshopUser.getId());
+
                 String displayName = (workshopUser.getName() != null && !workshopUser.getName().isBlank())
                         ? workshopUser.getName()
                         : workshopUser.getUsername();
+
                 response.setWorkshopName(displayName);
                 response.setDistanceKm(distance);
-                response.setVehicleType(requestedVehicleType);
+                response.setVehicleType(supported);
                 response.setServiceType(requestedServiceType);
                 response.setFormattedAddress(workshopUser.getWorkshopAddress().getFormattedAddress());
                 response.setLatitude(workshopUser.getWorkshopAddress().getLatitude());
                 response.setLongitude(workshopUser.getWorkshopAddress().getLongitude());
+
                 result.add(response);
             }
-            sortByDistance(result);
 
+            sortByDistance(result);
             log.info("Workshop search completed, {} results found", result.size());
+
             return result;
-        }
-        catch (Exception e) {
+
+        } catch (Exception e) {
             log.error("Error while searching workshops: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to search workshops.");
         }
