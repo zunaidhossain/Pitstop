@@ -190,6 +190,9 @@ public class AppUserServiceImplTest {
     @Order(8)
     @DisplayName("Final price for normal workshop should not apply premium")
     void shouldReturnFinalPriceForNormalWorkshop() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         GetPriceRequest request = new GetPriceRequest();
         request.setVehicleType("TWO_WHEELER");
@@ -207,6 +210,9 @@ public class AppUserServiceImplTest {
     @Order(9)
     @DisplayName("Final price for premium workshop should apply premium amount")
     void shouldApplyPremiumForPremiumWorkshop() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         GetPriceRequest request = new GetPriceRequest();
         request.setVehicleType("TWO_WHEELER");
@@ -224,7 +230,9 @@ public class AppUserServiceImplTest {
     @Order(10)
     @DisplayName("Should throw error when pricing rule does not exist")
     void shouldFailIfPricingRuleMissing() {
-
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         GetPriceRequest request = new GetPriceRequest();
         request.setVehicleType("FOUR_WHEELER");
@@ -237,6 +245,9 @@ public class AppUserServiceImplTest {
     @Order(11)
     @DisplayName("Should fail if workshop does not support requested service")
     void shouldFailIfWorkshopDoesNotSupportService() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(appUser.getUsername(), appUser.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         GetPriceRequest request = new GetPriceRequest();
         request.setVehicleType("TWO_WHEELER");
