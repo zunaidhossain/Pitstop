@@ -1,22 +1,14 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.dto.*;
-import com.pitstop.app.model.AdminUser;
-import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.WorkshopUser;
 import com.pitstop.app.service.impl.AdminUserServiceImpl;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
-import com.pitstop.app.service.impl.UserDetailsServiceImpl;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
-import com.pitstop.app.utils.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -58,12 +50,17 @@ public class PublicController {
         return ResponseEntity.ok(workshopService.loginWorkshopUser(workshopUser));
     }
     @PostMapping("/registerAdminUser")
-    public ResponseEntity<String> createNewAppUser(@RequestBody AdminUser adminUser, @RequestParam String key) {
-        if (!adminCreationKey.equals(key)){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid key. Access denied.");
+    public ResponseEntity<?> createNewAppUser(@RequestBody @Valid AdminUserRegisterRequest adminUser, @RequestParam String key) {
+        try {
+            if (!adminCreationKey.equals(key)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid key. Access denied.");
+            }
+            AdminUserRegisterResponse response = adminUserService.createAdmin(adminUser);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
-        adminUserService.createAdmin(adminUser);
-        return new ResponseEntity<>("New Admin account created successfully", HttpStatus.CREATED);
+        catch (Exception e){
+            return new ResponseEntity<>("Error creating new admin user", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     @PostMapping("/login/admin-user")
     public ResponseEntity<?> loginAdminUser(@RequestBody AdminUserLoginRequest adminUserLoginRequest){

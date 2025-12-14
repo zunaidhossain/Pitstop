@@ -1,9 +1,8 @@
 package com.pitstop.app.service.impl;
 
-import com.pitstop.app.dto.AdminUserLoginRequest;
-import com.pitstop.app.dto.AdminUserLoginResponse;
-import com.pitstop.app.dto.AppUserLoginResponse;
+import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.ResourceNotFoundException;
+import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.model.*;
 import com.pitstop.app.repository.AdminUserRepository;
 import com.pitstop.app.repository.AppUserRepository;
@@ -22,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -76,6 +76,22 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
     }
 
+    @Override
+    public WorkshopUserResponse setPremium(String workshopUserId) {
+        log.info("Setting premium for workshop with id {}", workshopUserId);
+        WorkshopUser workshopUser = workshopUserRepository.findById(workshopUserId)
+                .orElseThrow(() -> {
+                    log.error("Workshop user not found with id {}", workshopUserId);
+                    return new ResourceNotFoundException("Workshop user not found with id" + workshopUserId);
+                });
+        workshopUser.setPremiumWorkshop(true);
+        workshopUser.setAccountLastModifiedDateTime(LocalDateTime.now());
+        workshopUserRepository.save(workshopUser);
+        WorkshopUserResponse response = new WorkshopUserResponse();
+        response.setIsPremium(workshopUser.isPremiumWorkshop());
+        return response;
+    }
+
     private String updateUserRole(BaseUser user, String newRole) {
         user.setRoles(List.of(newRole.toUpperCase()));
 
@@ -87,13 +103,37 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         return "Role updated for: " + user.getUsername();
     }
-    public void createAdmin(AdminUser adminUser) {
-        if(adminUser.getId() != null && adminUserRepository.existsById(adminUser.getId())){
+    public AdminUserRegisterResponse createAdmin(AdminUserRegisterRequest request) {
+        try {
+            log.info("Creating a new admin user");
+            boolean isEmailExists = adminUserRepository.findByEmail(request.getEmail()).isPresent();
+            boolean isUsernameExists = adminUserRepository.findByUsername(request.getUsername()).isPresent();
+
+            if (isEmailExists || isUsernameExists) {
+                log.error("Email {} or Username {} already exists.", request.getEmail(), request.getUsername());
+                throw new UserAlreadyExistException("AdminUser already exists");
+            }
+            AdminUser adminUser = new AdminUser();
+            adminUser.setName(request.getName());
+            adminUser.setUsername(request.getUsername());
+            adminUser.setEmail(request.getEmail());
+            adminUser.setPassword(passwordEncoder.encode(request.getPassword()));
+            adminUser.setAccountCreationDateTime(LocalDateTime.now());
+            adminUser.setAccountLastModifiedDateTime(LocalDateTime.now());
             adminUserRepository.save(adminUser);
+            log.info("Admin user created");
+
+            return AdminUserRegisterResponse.builder()
+                    .id(adminUser.getId())
+                    .name(adminUser.getName())
+                    .username(adminUser.getUsername())
+                    .email(adminUser.getEmail())
+                    .createdAt(adminUser.getAccountCreationDateTime())
+                    .message("New Admin User created successfully")
+                    .build();
         }
-        else {
-            adminUser.setPassword(passwordEncoder.encode(adminUser.getPassword()));
-            adminUserRepository.save(adminUser);
+        catch (Exception e) {
+            throw new RuntimeException("Error while creating AdminUser", e);
         }
     }
     public AdminUserLoginResponse loginAdminUser(AdminUserLoginRequest req){

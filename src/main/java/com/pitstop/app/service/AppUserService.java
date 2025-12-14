@@ -24,4 +24,6 @@ public interface AppUserService {
     ResponseEntity<?>  deleteAppUser();
 
     PersonalInfoResponse getPersonalProfile();
+
+    GetPriceResponse getPrice(GetPriceRequest request);
 }

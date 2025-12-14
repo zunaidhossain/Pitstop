@@ -1,13 +1,14 @@
 package com.pitstop.app.service.impl;
 
+import com.pitstop.app.constants.VehicleType;
+import com.pitstop.app.constants.WorkshopServiceType;
 import com.pitstop.app.dto.*;
 import com.pitstop.app.exception.UserAlreadyExistException;
 import com.pitstop.app.exception.ResourceNotFoundException;
-import com.pitstop.app.model.Address;
-import com.pitstop.app.model.AppUser;
-import com.pitstop.app.model.CustomUserDetails;
-import com.pitstop.app.model.UserType;
+import com.pitstop.app.model.*;
 import com.pitstop.app.repository.AppUserRepository;
+import com.pitstop.app.repository.PricingRuleRepository;
+import com.pitstop.app.repository.WorkshopUserRepository;
 import com.pitstop.app.service.AppUserService;
 import com.pitstop.app.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ public class AppUserServiceImpl implements AppUserService {
     private final AuthenticationManager manager;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtil jwtUtil;
+    private final PricingRuleRepository pricingRuleRepository;
+    private final WorkshopUserRepository workshopUserRepository;
 
     @Value("${trueway.api.url}")
     private String truewayApiUrl;
@@ -391,5 +394,100 @@ public class AppUserServiceImpl implements AppUserService {
         return new PersonalInfoResponse(currentAppUser.getName(),
                 currentAppUser.getUsername(), currentAppUser.getEmail(),
                 Math.round(currentAppUser.getRating() * 10.0) / 10.0);
+    }
+
+    @Override
+    public GetPriceResponse getPrice(GetPriceRequest request) {
+        try {
+            log.info("Price request received | vehicle={} service={} workshopId={}",
+                    request.getVehicleType(),
+                    request.getServiceType(),
+                    request.getWorkshopId());
+            validateRequest(request);
+            VehicleType vt = parseWorkshopVehicleType(request.getVehicleType());
+            WorkshopServiceType st = parseWorkshopServiceType(request.getServiceType());
+            PricingRule pricingRule = pricingRuleRepository.findByVehicleTypeAndServiceType(vt, st)
+                    .orElseThrow(() -> {
+                        log.error("Pricing rule not defined for vehicle type {} and service type {}", vt, st);
+                        return new ResourceNotFoundException("Pricing rule not defined for vehicle type " + vt + " and service type " + st);
+                    });
+            double baseAmount = pricingRule.getAmount();
+            if (request.getWorkshopId() == null) {
+                log.info("Returning Estimated Price");
+                return GetPriceResponse.builder()
+                        .baseAmount(baseAmount)
+                        .premiumAmount(0.0)
+                        .finalAmount(baseAmount)
+                        .premiumApplied(false)
+                        .message("Estimated Base Price")
+                        .build();
+            }
+            WorkshopUser workshopUser = workshopUserRepository.findById(request.getWorkshopId())
+                    .orElseThrow(() -> {
+                        log.error("Workshop User not found for workshopId {}", request.getWorkshopId());
+                        return new ResourceNotFoundException("Workshop User not found for workshopId " + request.getWorkshopId());
+                    });
+            validateWorkshopSupport(workshopUser, request);
+
+            double premiumAmount = 0;
+            boolean premiumApplied = false;
+            if (workshopUser.isPremiumWorkshop()) {
+                premiumAmount = pricingRule.getPremiumAmount();
+                premiumApplied = true;
+            }
+            double finalAmount = baseAmount + premiumAmount;
+            log.info("Final price calculated | base={} premium={} final={}",
+                    baseAmount, premiumAmount, finalAmount);
+
+            return GetPriceResponse.builder()
+                    .baseAmount(baseAmount)
+                    .premiumAmount(premiumAmount)
+                    .finalAmount(finalAmount)
+                    .premiumApplied(premiumApplied)
+                    .message(premiumApplied ?
+                            "Premium workshop pricing applied"
+                            : "Standard workshop pricing applied")
+                    .build();
+        }
+        catch (Exception e) {
+            log.error("Error while fetching price");
+            throw new RuntimeException("Error while fetching price" + e.getMessage());
+        }
+    }
+    private VehicleType parseWorkshopVehicleType(String workshopVehicleType) {
+        try{
+            return VehicleType.valueOf(workshopVehicleType.toUpperCase());
+        }
+        catch(Exception e){
+            log.error("Invalid vehicle type: {}", workshopVehicleType, e);
+            throw new RuntimeException("Invalid vehicle type: " + workshopVehicleType);
+        }
+    }
+    private WorkshopServiceType parseWorkshopServiceType(String workshopServiceType) {
+        try{
+            return WorkshopServiceType.valueOf(workshopServiceType.toUpperCase());
+        }
+        catch(Exception e){
+            log.error("Invalid service type: {}", workshopServiceType, e);
+            throw new RuntimeException("Invalid service type: " + workshopServiceType);
+        }
+    }
+    private void validateRequest(GetPriceRequest request) {
+        if (request.getVehicleType() == null || request.getServiceType() == null) {
+            throw new IllegalArgumentException("Vehicle type and service type are required");
+        }
+    }
+
+    private void validateWorkshopSupport(WorkshopUser workshop, GetPriceRequest request) {
+        WorkshopServiceType st =  parseWorkshopServiceType(request.getServiceType());
+        if (!workshop.getServicesOffered().contains(st)) {
+            log.error("Workshop service type {} does not exist", st);
+            throw new RuntimeException("Workshop does not support this service");
+        }
+        VehicleType vt = parseWorkshopVehicleType(request.getVehicleType());
+        if (!workshop.getVehicleTypeSupported().equals(vt)) {
+            log.error("Workshop does not support this vehicle type {}", vt);
+            throw new RuntimeException("Workshop does not support this vehicle type");
+        }
     }
 }

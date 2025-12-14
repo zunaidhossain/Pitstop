@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface AdminUserRepository extends MongoRepository<AdminUser,String> {
     Optional<AdminUser> findByUsername(String username);
+    Optional<AdminUser> findByEmail(String email);
+    void deleteByUsername(String username);
 }
