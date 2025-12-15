@@ -38,6 +38,7 @@ public class WorkshopUser implements BaseUser{
     private List<Integer> ratingsList = new ArrayList<>();
     private List<WorkshopServiceType> servicesOffered = new ArrayList<>();
     private VehicleType vehicleTypeSupported;
+    private boolean isPremiumWorkshop = false;
 
     @DBRef
     private List<Booking> bookingHistory = new ArrayList<>();

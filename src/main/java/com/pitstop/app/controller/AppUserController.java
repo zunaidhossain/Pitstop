@@ -112,4 +112,13 @@ public class AppUserController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+    @PostMapping("/getPrice")
+    public ResponseEntity<GetPriceResponse> getPrice(@RequestBody GetPriceRequest getPriceRequest) {
+        try{
+            return new ResponseEntity<>(appUserService.getPrice(getPriceRequest), HttpStatus.OK);
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

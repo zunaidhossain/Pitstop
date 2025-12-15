@@ -14,4 +14,5 @@ public class WorkshopUserResponse {
     private String email;
     private String password;
     private Address address;
+    private Boolean isPremium;
 }

@@ -1,9 +1,13 @@
 package com.pitstop.app.controller;
 
 import com.pitstop.app.dto.AdminUserLoginRequest;
+import com.pitstop.app.dto.AdminUserRegisterRequest;
+import com.pitstop.app.dto.CreatePricingRuleRequest;
+import com.pitstop.app.dto.UpdatePricingRuleRequest;
 import com.pitstop.app.model.AdminUser;
 import com.pitstop.app.model.AppUser;
 import com.pitstop.app.model.WorkshopUser;
+import com.pitstop.app.service.impl.AdminPricingServiceImpl;
 import com.pitstop.app.service.impl.AdminUserServiceImpl;
 import com.pitstop.app.service.impl.AppUserServiceImpl;
 import com.pitstop.app.service.impl.WorkshopUserServiceImpl;
@@ -23,8 +27,7 @@ public class AdminController {
     private final AppUserServiceImpl appUserService;
     private final WorkshopUserServiceImpl workshopService;
     private final AdminUserServiceImpl adminUserService;
-    @Value("${ADMIN_CREATION_KEY}")
-    private String adminCreationKey;
+    private final AdminPricingServiceImpl adminPricingService;
 
     @GetMapping("/appUsers")
     public ResponseEntity<List<AppUser>> getAllAppUser() {
@@ -60,18 +63,6 @@ public class AdminController {
         String result = adminUserService.changeUserRole(username, newRole);
         return ResponseEntity.ok(result);
     }
-    @PostMapping("/registerAdminUser")
-    public ResponseEntity<String> createNewAdminUser(@RequestBody AdminUser adminUser,@RequestParam String key) {
-        if (!adminCreationKey.equals(key)){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid key. Access denied.");
-        }
-        adminUserService.createAdmin(adminUser);
-        return new ResponseEntity<>("New Admin account created successfully", HttpStatus.CREATED);
-    }
-    @PostMapping("/login/admin-user")
-    public ResponseEntity<?> loginAdminUser(@RequestBody AdminUserLoginRequest adminUserLoginRequest){
-        return ResponseEntity.ok(adminUserService.loginAdminUser(adminUserLoginRequest));
-    }
     @GetMapping("/bookingHistory/AppUser/{appUserId}")
     public ResponseEntity<?> getBookingHistoryAppUser(@PathVariable String appUserId) {
         try {
@@ -94,6 +85,51 @@ public class AdminController {
             return new ResponseEntity<>(adminUserService.getBookingDetailsById(bookingId), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Invalid Booking Id, Booking not found", HttpStatus.NOT_FOUND);
+        }
+    }
+    @PostMapping("/addPricingRule")
+    public ResponseEntity<?> addPricingRule(@RequestBody CreatePricingRuleRequest request) {
+        try {
+            return new ResponseEntity<>(adminPricingService.createPricingRule(request), HttpStatus.CREATED);
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>("Error creating pricing rule : "+ e.getMessage(),HttpStatus.BAD_REQUEST);
+        }
+    }
+    @GetMapping("/getAllPricingRules")
+    public ResponseEntity<?> getAllPricingRules() {
+        try {
+            return new ResponseEntity<>(adminPricingService.getAllPricingRules(),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error getting all pricing rules", HttpStatus.BAD_REQUEST);
+        }
+    }
+    @PutMapping("/updatePricingRule/{id}")
+    public ResponseEntity<?> updatePricingRule(@RequestBody UpdatePricingRuleRequest request, @PathVariable String id) {
+        try {
+            return new ResponseEntity<>(adminPricingService.updatePricingRule(request,id), HttpStatus.OK);
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>("Error updating pricing rule",HttpStatus.BAD_REQUEST);
+        }
+    }
+    @DeleteMapping("/deletePricingRule/{id}")
+    public ResponseEntity<?> deletePricingRule(@PathVariable String id) {
+        try{
+            adminPricingService.deletePricingRule(id);
+            return new ResponseEntity<>("Successfully deleted pricing rule",HttpStatus.OK);
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>("Error deleting pricing rule",HttpStatus.BAD_REQUEST);
+        }
+    }
+    @PutMapping("/setPremium/{id}")
+    public ResponseEntity<?> setPremium(@PathVariable String id) {
+        try{
+            return new ResponseEntity<>(adminUserService.setPremium(id), HttpStatus.OK);
+        }
+        catch (Exception e) {
+            return new ResponseEntity<>("Error updating premium",HttpStatus.BAD_REQUEST);
         }
     }
 }
